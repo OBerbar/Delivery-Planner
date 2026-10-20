@@ -1,0 +1,103 @@
+.commitment-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.feature-dates .commitment-dates {
+  align-items: flex-end;
+  text-align: right;
+}
+.commitment-dates .commitment-accepted {
+  color: var(--foreground);
+  font-size: 12px;
+}
+.commitment-dates .commitment-recorded {
+  color: var(--muted-foreground, #626775);
+  font-size: 11px;
+}
+.commitment-dates .commitment-risk,
+.commitment-dates .commitment-missing {
+  color: var(--warning-foreground, #805317);
+  font-size: 12px;
+}
+.commitment-editor-baseline {
+  border: 1px solid var(--border, #e3e5ec);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.commitment-editor-baseline .commitment-dates {
+  margin-top: 0;
+}
+.commitment-editor-baseline .helper {
+  margin-top: 8px;
+}
+.commitment-refresh-hint {
+  margin: -8px 0 18px;
+}
+.commitment-help,
+.commitment-refresh-hint,
+.commitment-sprint-actions .helper,
+.commitment-editor-baseline .helper {
+  color: var(--muted-foreground, #626775);
+  font-size: 12px;
+}
+.commitment-toolbar-actions {
+  flex-wrap: wrap;
+}
+.commitment-sprint-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.commitment-sprint-actions .helper {
+  flex: 1;
+}
+.commitment-toggle {
+  border: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+.commitment-toggle:disabled {
+  opacity: 0.55;
+}
+.feature-dates .commitment-refresh-button {
+  font-size: 11px;
+  min-height: 32px;
+}
+@media (max-width: 1200px) {
+  .commitment-toolbar-actions .button,
+  .commitment-sprint-actions .button,
+  .feature-dates .commitment-refresh-button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 1000px) {
+  .commitment-sprint-actions {
+    flex-wrap: wrap;
+  }
+  .commitment-sprint-actions .helper {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 600px) {
+  .feature-dates .commitment-dates {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .commitment-toolbar-actions,
+  .commitment-toolbar-actions .button {
+    max-width: 100%;
+  }
+  .commitment-sprint-actions .button,
+  .feature-dates .commitment-refresh-button {
+    min-height: 44px;
+    max-width: 100%;
+    white-space: normal;
+  }
+}

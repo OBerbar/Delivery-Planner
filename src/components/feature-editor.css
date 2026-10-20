@@ -1,0 +1,85 @@
+.modal__backdrop.feature-editor-backdrop {
+  justify-content: flex-end;
+  background: rgb(36 38 51 / 16%);
+  backdrop-filter: none;
+}
+.modal__container.feature-editor-container {
+  width: min(680px, 100vw);
+  max-width: 680px;
+  flex: none;
+  padding: 0;
+  height: var(--visual-viewport-height, 100dvh);
+}
+.dialog.feature-editor-panel {
+  width: 100% !important;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  border-radius: 16px 0 0 16px !important;
+  padding: 26px !important;
+  box-shadow: -10px 0 40px rgb(36 38 51 / 12%);
+}
+.feature-editor-panel .modal__header {
+  padding-right: 32px;
+}
+.feature-editor-panel .modal__body {
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.feature-editor-form > * {
+  min-width: 0;
+}
+.feature-editor-section {
+  border: 1px solid var(--border, #e3e5ec);
+  border-radius: 10px;
+  background: var(--background);
+}
+.feature-editor-section > summary {
+  min-height: 48px;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--foreground);
+}
+.feature-editor-section > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+.feature-editor-section[open] > summary {
+  border-bottom: 1px solid var(--border, #e3e5ec);
+}
+.feature-editor-section-content {
+  padding: 16px;
+}
+.feature-editor-panel .dialog-actions .button,
+.feature-editor-panel .modal__close-trigger {
+  min-height: 44px;
+}
+.feature-editor-panel .dialog-actions .button {
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .modal__backdrop.feature-editor-backdrop {
+    align-items: flex-end;
+    padding: 0 12px;
+  }
+  .modal__container.feature-editor-container {
+    width: min(680px, calc(100vw - 24px));
+    height: calc(var(--visual-viewport-height, 100dvh) - 16px);
+  }
+  .dialog.feature-editor-panel {
+    border-radius: 16px 16px 0 0 !important;
+    padding: 22px !important;
+  }
+}
+@media (max-width: 600px) {
+  .dialog.feature-editor-panel {
+    padding: 18px !important;
+  }
+  .feature-editor-section-content {
+    padding: 12px;
+  }
+}

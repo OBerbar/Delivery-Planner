@@ -1,0 +1,25 @@
+node_modules/
+dist/
+data/
+test-results/
+playwright-report/
+coverage/
+output/
+backups/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.log
+.DS_Store
+
+# Preserved internal workspace records; never publish
+.private/
+PUBLIC-SOURCE-FILES.json
+
+# Private marketing and launch-planning documents
+/docs/linkedin-launch-post.md
+/docs/product-positioning.md

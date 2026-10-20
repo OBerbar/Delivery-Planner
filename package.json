@@ -1,0 +1,63 @@
+{
+  "name": "delivery-studio",
+  "private": true,
+  "version": "1.0.0-beta.1",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"tsx watch server/index.ts\" \"vite --host 127.0.0.1\"",
+    "build": "tsc --noEmit && vite build",
+    "start": "node --import tsx server/index.ts",
+    "test": "vitest run",
+    "test:ui": "playwright test",
+    "format": "prettier --write src server tests scripts *.ts *.json docs/*.md docs/*.json README.md AGENTS.md",
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --check src server tests scripts *.ts *.json docs/*.md docs/*.json README.md AGENTS.md",
+    "test:coverage": "vitest run --coverage",
+    "test:visual": "playwright test --grep @visual --project chrome",
+    "test:a11y": "playwright test --grep @a11y",
+    "test:smoke": "playwright test --config playwright.smoke.config.ts",
+    "check:docs": "node scripts/check-docs.mjs && node --test scripts/check-docs.test.mjs",
+    "verify": "node scripts/verify.mjs",
+    "test:packaging": "node --test release/packaging.test.mjs"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.5",
+    "@heroui/react": "^3.0.0",
+    "@heroui/styles": "^3.0.0",
+    "better-sqlite3": "^12.4.0",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.45.3",
+    "fastify": "^5.12.5",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.55.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "concurrently": "^9.2.0",
+    "esbuild": "0.28.2",
+    "prettier": "^3.9.9",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^4.1.11",
+    "yazl": "3.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OBerbar/Delivery-Planner.git"
+  },
+  "license": "MIT"
+}

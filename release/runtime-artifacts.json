@@ -1,0 +1,43 @@
+{
+  "nodeVersion": "24.21.0",
+  "sqliteVersion": "12.11.1",
+  "nodeAbi": 137,
+  "artifacts": [
+    {
+      "name": "node-v24.21.0-darwin-arm64.tar.gz",
+      "url": "https://nodejs.org/download/release/v24.21.0/node-v24.21.0-darwin-arm64.tar.gz",
+      "sha256": "bed7eea5325e1108f32ce5228ddd6a5f0f08a499ee42aa7442aea583702f6057"
+    },
+    {
+      "name": "node-v24.21.0-darwin-x64.tar.gz",
+      "url": "https://nodejs.org/download/release/v24.21.0/node-v24.21.0-darwin-x64.tar.gz",
+      "sha256": "1462cb3b3046b815cf8ea436d3da450ec1a9f11dac7e5a46b0ada5305d7e8097"
+    },
+    {
+      "name": "node-v24.21.0-win-x64.zip",
+      "url": "https://nodejs.org/download/release/v24.21.0/node-v24.21.0-win-x64.zip",
+      "sha256": "158f7685b44de51f6c0df1d153526cbcd3e1bc739a8dfc607721cef75de9e541"
+    },
+    {
+      "name": "better-sqlite3-v12.11.1-node-v137-darwin-arm64.tar.gz",
+      "url": "https://github.com/WiseLibs/better-sqlite3/releases/download/v12.11.1/better-sqlite3-v12.11.1-node-v137-darwin-arm64.tar.gz",
+      "sha256": "6eaefc8a9c088fea873365f7db2c0f89be6ea021ede62f6a71832f5130826a93"
+    },
+    {
+      "name": "better-sqlite3-v12.11.1-node-v137-darwin-x64.tar.gz",
+      "url": "https://github.com/WiseLibs/better-sqlite3/releases/download/v12.11.1/better-sqlite3-v12.11.1-node-v137-darwin-x64.tar.gz",
+      "sha256": "f9fe570a2ef7d6069196dd595f49bc8592574963dd1f249dcaa8878626773fc9"
+    },
+    {
+      "name": "better-sqlite3-v12.11.1-node-v137-win32-x64.tar.gz",
+      "url": "https://github.com/WiseLibs/better-sqlite3/releases/download/v12.11.1/better-sqlite3-v12.11.1-node-v137-win32-x64.tar.gz",
+      "sha256": "4ee5e653174d6ddd301605d351798cdae2613da06c4f37ecdce263021fcf1255"
+    },
+    {
+      "name": "go1.27.2.darwin-arm64.tar.gz",
+      "url": "https://go.dev/dl/go1.27.2.darwin-arm64.tar.gz",
+      "sha256": "76812b213b1b2302c978d28fa52fa92d541704b9e7d9d5db8002c50e4018c4c5",
+      "buildOnly": true
+    }
+  ]
+}

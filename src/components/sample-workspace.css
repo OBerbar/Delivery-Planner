@@ -1,0 +1,132 @@
+.sample-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+}
+.wizard-footer:has(.sample-entry) {
+  height: auto;
+  min-height: 58px;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  padding: 12px 22px;
+}
+.sample-banner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 16px 24px;
+  color: #363052;
+  background: #eeebfa;
+  border-bottom: 1px solid #d7d0f1;
+}
+.sample-banner p {
+  font-size: 13px;
+  margin-top: 4px;
+}
+.sample-banner nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+.sample-banner a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #5141a0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.beginner-guide {
+  max-width: 1000px;
+  padding: 32px;
+  margin: 0 auto;
+}
+.beginner-guide nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 32px;
+}
+.beginner-guide nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.beginner-guide article {
+  background: white;
+  border: 1px solid #e3e5eb;
+  border-radius: 16px;
+  padding: clamp(20px, 4vw, 48px);
+  line-height: 1.7;
+}
+.beginner-guide article h1 {
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.2;
+  margin-bottom: 24px;
+}
+.beginner-guide article h2 {
+  font-size: 23px;
+  margin: 36px 0 12px;
+  line-height: 1.3;
+}
+.beginner-guide article p,
+.beginner-guide article ul,
+.beginner-guide article ol {
+  margin: 12px 0;
+}
+.beginner-guide article ul {
+  list-style: disc;
+  padding-left: 24px;
+}
+.beginner-guide article ol {
+  list-style: decimal;
+  padding-left: 24px;
+}
+.beginner-guide article img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #e3e5eb;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+.beginner-guide article table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  max-width: 100%;
+}
+.beginner-guide article th,
+.beginner-guide article td {
+  padding: 10px;
+  border: 1px solid #e3e5eb;
+  text-align: left;
+}
+.beginner-guide article code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .sample-banner {
+    padding: 12px 16px;
+  }
+  .sample-banner nav {
+    gap: 4px 16px;
+  }
+  .beginner-guide {
+    padding: 16px;
+  }
+  .wizard-footer .sample-entry {
+    display: flex;
+    margin-left: 0;
+  }
+}

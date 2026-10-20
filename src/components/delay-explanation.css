@@ -1,0 +1,120 @@
+.delay-explanation {
+  margin-top: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.delay-explanation summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.delay-explanation summary::before {
+  content: "+";
+  font-size: 18px;
+}
+.delay-explanation[open] summary::before {
+  content: "−";
+}
+.delay-explanation summary:hover {
+  background: var(--surface-secondary, #f4f3fa);
+}
+.delay-explanation summary:focus-visible {
+  outline: 2px solid var(--accent, #7565db);
+  outline-offset: 2px;
+}
+.delay-explanation-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+.delay-explanation[open] > .delay-explanation-body,
+.delay-explanation[open] > .helper {
+  margin: 8px 0 12px;
+}
+.delay-date-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 8px 0;
+}
+.delay-date-comparison dt {
+  font-size: 11px;
+  color: var(--muted-foreground, #626775);
+}
+.delay-date-comparison dd {
+  font-weight: 600;
+  margin: 0;
+}
+.delay-explanation-body .delay-summary {
+  font-weight: 600;
+  color: var(--warning-foreground, #805317);
+}
+.delay-explanation-body .delay-context {
+  font-size: 12px;
+  color: var(--muted-foreground, #626775);
+  margin: 10px 0 16px;
+}
+.delay-explanation-body h3 {
+  font-size: 15px;
+  margin: 16px 0 8px;
+}
+.delay-explanation-body h4 {
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+.delay-explanation-body h5 {
+  font-size: 12px;
+  margin: 14px 0 6px;
+}
+.delay-person {
+  border: 1px solid var(--border, #e3e5ec);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 12px 0;
+}
+.delay-explanation-body .delay-person p {
+  margin: 6px 0;
+  color: inherit;
+  font-size: 12px;
+}
+.delay-person ul {
+  padding-left: 18px;
+  margin: 6px 0;
+}
+.delay-person li {
+  margin: 8px 0;
+}
+.delay-person li > span {
+  display: block;
+  font-size: 12px;
+}
+.timeline-delay-trigger {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+}
+.timeline-row-label:has(.timeline-delay-trigger) > .timeline-row-title {
+  flex: 1;
+}
+@media (max-width: 600px) {
+  .delay-date-comparison {
+    grid-template-columns: 1fr;
+  }
+  .delay-person {
+    padding: 10px;
+  }
+}

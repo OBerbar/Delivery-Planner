@@ -1,0 +1,8 @@
+.person-feature-bar {
+  font-size: 11px;
+}
+.timeline-bar:focus-visible,
+.unscheduled:focus-visible {
+  outline: 2px solid #423073;
+  outline-offset: 2px;
+}

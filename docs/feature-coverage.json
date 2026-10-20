@@ -1,0 +1,582 @@
+{
+  "version": 1,
+  "features": [
+    {
+      "id": "setup",
+      "title": "App setup wizard",
+      "manualAnchor": "wizard",
+      "fields": [
+        "App name",
+        "Planning starts",
+        "Plan in sprints",
+        "Default sprint length",
+        "Calendar days per sprint",
+        "First sprint number",
+        "Person N name",
+        "Person N role",
+        "Person N hours per day",
+        "Person N allocation (%)",
+        "Give it a color",
+        "Use example team",
+        "Person N source",
+        "Override app weekends for this person",
+        "App weekend days",
+        "General terms for sprint plans",
+        "Back",
+        "Continue",
+        "Cancel setup",
+        "Open my planner"
+      ],
+      "tests": [
+        "tests/ui.spec.ts",
+        "tests/full-qa.spec.ts",
+        "tests/public-preset.spec.ts",
+        "tests/delivery-setup.spec.ts"
+      ]
+    },
+    {
+      "id": "timeline",
+      "title": "Timeline controls, viewport sizing and calendar colors",
+      "manualAnchor": "timeline",
+      "fields": [
+        "Timeline range",
+        "Previous week",
+        "Next week",
+        "By feature",
+        "By person",
+        "Day",
+        "Week",
+        "Month",
+        "Today",
+        "Expand",
+        "Collapse leaves and holidays",
+        "Expand leaves and holidays",
+        "Delivery timeline",
+        "Filter by person",
+        "Filter by sprint",
+        "Filter by status",
+        "Filter by risk",
+        "Reset filters",
+        "Accepted date"
+      ],
+      "tests": [
+        "tests/ui.spec.ts",
+        "tests/availability-timeline.spec.ts",
+        "tests/maintenance.spec.ts",
+        "tests/timeline-view.spec.ts",
+        "tests/timeline-people.spec.ts",
+        "tests/timeline-people.test.ts",
+        "tests/app-layout.spec.ts",
+        "tests/view-preferences.test.ts",
+        "tests/timeline-refinements.spec.ts",
+        "tests/date-status.test.ts",
+        "tests/date-status.spec.ts",
+        "tests/feature-blocked.test.ts",
+        "tests/feature-blocked.spec.ts"
+      ]
+    },
+    {
+      "id": "timeline-pdf",
+      "title": "Timeline PDF export",
+      "manualAnchor": "timeline-pdf",
+      "fields": [
+        "Export timeline PDF",
+        "Export features PDF",
+        "Export compact features PDF",
+        "Print / Save PDF",
+        "Close preview"
+      ],
+      "tests": [
+        "tests/timeline-print.test.ts",
+        "tests/timeline-print.spec.ts",
+        "tests/feature-blocked.test.ts",
+        "tests/feature-blocked.spec.ts"
+      ]
+    },
+    {
+      "id": "features",
+      "title": "Feature lifecycle and dates",
+      "manualAnchor": "features",
+      "fields": [
+        "Feature title",
+        "Description",
+        "Target delivery date",
+        "Start no earlier than",
+        "Assigned sprint",
+        "Reference link or work-item ID",
+        "Completion conditions",
+        "Search features",
+        "Save feature",
+        "Cancel",
+        "Feature blocked"
+      ],
+      "tests": [
+        "tests/full-qa.spec.ts",
+        "tests/person-estimates.spec.ts",
+        "tests/date-status.test.ts",
+        "tests/date-status.spec.ts",
+        "tests/planner-load.test.ts",
+        "tests/automatic-date-status.test.ts",
+        "tests/date-status-migration.spec.ts",
+        "tests/feature-blocked.test.ts",
+        "tests/feature-blocked.spec.ts",
+        "tests/delivery-setup.spec.ts"
+      ]
+    },
+    {
+      "id": "automatic-status",
+      "title": "Automatic date status and stable planning anchors",
+      "manualAnchor": "features",
+      "fields": ["Planned", "In progress", "Done"],
+      "tests": [
+        "tests/date-status.test.ts",
+        "tests/date-status.spec.ts",
+        "tests/planner-load.test.ts",
+        "tests/automatic-date-status.test.ts",
+        "tests/date-status-migration.spec.ts",
+        "tests/feature-blocked.test.ts",
+        "tests/feature-blocked.spec.ts"
+      ]
+    },
+    {
+      "id": "parallel-work",
+      "title": "Parallel work and reassigned capacity",
+      "manualAnchor": "parallel-work",
+      "fields": ["Keep other delivery dates", "Reassigned"],
+      "tests": [
+        "tests/parallel-work.test.ts",
+        "tests/parallel-work.spec.ts",
+        "tests/production.smoke.ts"
+      ]
+    },
+    {
+      "id": "estimates",
+      "title": "Shared and mixed per-person estimates",
+      "manualAnchor": "features",
+      "fields": [
+        "Estimate method",
+        "Estimate unit",
+        "Sprint estimation",
+        "Working days estimation",
+        "Main assignees",
+        "Select all team",
+        "Person estimate",
+        "Person estimate unit"
+      ],
+      "tests": [
+        "tests/sprint-estimates.test.ts",
+        "tests/estimate-preparation.test.ts",
+        "tests/person-estimates.spec.ts",
+        "tests/planning-invariants.test.ts",
+        "tests/working-days-delivery.test.ts",
+        "tests/working-days.spec.ts",
+        "tests/delivery-setup.spec.ts"
+      ]
+    },
+    {
+      "id": "tasks-dependencies",
+      "title": "Optional tasks and dependencies",
+      "manualAnchor": "tasks",
+      "fields": [
+        "Add optional task breakdown",
+        "Task N title",
+        "Task N owner",
+        "Task N scope",
+        "Task N remaining days",
+        "Depends on (finishes before this task starts)",
+        "Add task",
+        "Remove task"
+      ],
+      "tests": [
+        "tests/planning.test.ts",
+        "tests/review.test.ts",
+        "tests/full-qa.spec.ts",
+        "tests/working-days-delivery.test.ts",
+        "tests/working-days.spec.ts",
+        "tests/date-status.test.ts",
+        "tests/date-status.spec.ts",
+        "tests/automatic-date-status.test.ts"
+      ]
+    },
+    {
+      "id": "team",
+      "title": "Team members and app membership",
+      "manualAnchor": "team",
+      "fields": [
+        "Search team",
+        "Person source",
+        "Name",
+        "Role / scope",
+        "Hours per day",
+        "Allocation to this app (%)",
+        "Override app weekends",
+        "Clear team search",
+        "Save person",
+        "Remove from app"
+      ],
+      "tests": ["tests/ui.spec.ts", "tests/full-qa.spec.ts"]
+    },
+    {
+      "id": "leave",
+      "title": "Personal leave creation and editing",
+      "manualAnchor": "leave",
+      "fields": [
+        "Person taking leave",
+        "Leave starts",
+        "Leave ends",
+        "Full-day leave",
+        "Days off per day",
+        "Leave note",
+        "Save leave"
+      ],
+      "tests": [
+        "tests/leave-editing.spec.ts",
+        "tests/planning-invariants.test.ts",
+        "tests/full-qa.spec.ts",
+        "tests/working-days-delivery.test.ts",
+        "tests/working-days.spec.ts"
+      ]
+    },
+    {
+      "id": "holidays",
+      "title": "App and selected-person holidays",
+      "manualAnchor": "holidays",
+      "fields": [
+        "Holiday name",
+        "Holiday date",
+        "Whole app holiday",
+        "Select all members",
+        "Save holiday",
+        "Clear selection"
+      ],
+      "tests": ["tests/calendar-templates.spec.ts", "tests/full-qa.spec.ts"]
+    },
+    {
+      "id": "templates",
+      "title": "Reusable named calendars",
+      "manualAnchor": "templates",
+      "fields": [
+        "Template name",
+        "Entry N name",
+        "Entry N kind",
+        "Entry N starts",
+        "Entry N ends",
+        "Entry N days off per day",
+        "Select all members",
+        "New calendar template",
+        "Add calendar entry",
+        "Save template",
+        "Apply calendar",
+        "Clear selection"
+      ],
+      "tests": [
+        "tests/calendar-templates.spec.ts",
+        "tests/availability-commitments.test.ts",
+        "tests/planning-invariants.test.ts",
+        "tests/working-days-delivery.test.ts",
+        "tests/working-days.spec.ts"
+      ]
+    },
+    {
+      "id": "sprints",
+      "title": "Sprint calendars and overrides",
+      "manualAnchor": "sprints",
+      "fields": [
+        "Sprint number",
+        "Sprint starts",
+        "Sprint ends",
+        "Planning notes",
+        "Apply app\u2019s default duration",
+        "New sprint",
+        "Edit sprint",
+        "Save sprint",
+        "Delete sprint",
+        "Committed"
+      ],
+      "tests": [
+        "tests/sprint-calendar.test.ts",
+        "tests/full-qa.spec.ts",
+        "tests/sprint-plan-goals.test.ts",
+        "tests/working-days.spec.ts"
+      ]
+    },
+    {
+      "id": "commitments",
+      "title": "Accepted dates and risk",
+      "manualAnchor": "commitments",
+      "fields": [
+        "Accept delivery date",
+        "Committed",
+        "Refresh app commitment dates",
+        "Refresh sprint commitment dates"
+      ],
+      "tests": [
+        "tests/commitments.spec.ts",
+        "tests/availability-commitments.test.ts",
+        "tests/maintenance.spec.ts",
+        "tests/working-days-delivery.test.ts",
+        "tests/working-days.spec.ts"
+      ]
+    },
+    {
+      "id": "plans",
+      "title": "Resources, drafts, snapshots and exports",
+      "manualAnchor": "plans",
+      "fields": [
+        "Sprint plan Markdown",
+        "Generate sprint plan",
+        "Save draft",
+        "Export Markdown",
+        "Saved plan",
+        "Scope & capacity",
+        "Sprint plan",
+        "Edit text",
+        "Preview",
+        "Regenerate draft",
+        "Finalize plan",
+        "Save new snapshot",
+        "Print / PDF"
+      ],
+      "tests": [
+        "tests/review.test.ts",
+        "tests/full-qa.spec.ts",
+        "tests/maintenance.spec.ts",
+        "tests/working-days-delivery.test.ts",
+        "tests/working-days.spec.ts",
+        "tests/sprint-plan-goals.test.ts"
+      ]
+    },
+    {
+      "id": "settings",
+      "title": "App settings and archive",
+      "manualAnchor": "settings",
+      "fields": [
+        "App name",
+        "Planning starts",
+        "Default sprint length",
+        "Calendar days per sprint",
+        "General terms for exported plans",
+        "Save settings",
+        "Default weekend days",
+        "Archive app",
+        "Restore app"
+      ],
+      "tests": ["tests/ui.spec.ts", "tests/full-qa.spec.ts"]
+    },
+    {
+      "id": "backup-undo",
+      "title": "Workspace backup, restore and undo",
+      "manualAnchor": "backups",
+      "fields": [
+        "Restore backup",
+        "Export full backup",
+        "Undo last change",
+        "Current app",
+        "All apps overview",
+        "Add an app"
+      ],
+      "tests": [
+        "tests/full-qa.spec.ts",
+        "tests/commitments.spec.ts",
+        "tests/persistence-regressions.test.ts",
+        "tests/date-status.test.ts",
+        "tests/date-status.spec.ts",
+        "tests/planner-load.test.ts",
+        "tests/date-status-migration.spec.ts",
+        "tests/feature-blocked.test.ts",
+        "tests/feature-blocked.spec.ts"
+      ]
+    },
+    {
+      "id": "scheduling",
+      "title": "Cross-app availability and resource conservation",
+      "manualAnchor": "resources",
+      "fields": ["Available", "Remaining", "Fits here", "Other apps"],
+      "tests": [
+        "tests/planning.test.ts",
+        "tests/planning-invariants.test.ts",
+        "tests/sprint-estimates.test.ts",
+        "tests/working-days-delivery.test.ts",
+        "tests/working-days.spec.ts",
+        "tests/date-status.test.ts",
+        "tests/date-status.spec.ts",
+        "tests/automatic-date-status.test.ts"
+      ]
+    },
+    {
+      "id": "maintenance",
+      "title": "Verification and documentation maintenance",
+      "manualAnchor": "getting-started",
+      "fields": ["Retry connection", "Dismiss message"],
+      "tests": [
+        "tests/maintenance.spec.ts",
+        "tests/production.smoke.ts",
+        "tests/persistence-regressions.test.ts",
+        "tests/app-layout.spec.ts",
+        "tests/planner-load.test.ts",
+        "tests/date-status-migration.spec.ts"
+      ]
+    },
+    {
+      "id": "delay-explanations",
+      "title": "Commitment delay explanations",
+      "manualAnchor": "delay-explanations",
+      "fields": [
+        "Why delayed?",
+        "Affected people",
+        "Competing work",
+        "Calendar constraints",
+        "Start and dependency constraints",
+        "Delay explanation details"
+      ],
+      "tests": [
+        "tests/delay-explanation.test.ts",
+        "tests/delay-explanation.spec.ts"
+      ]
+    },
+    {
+      "id": "compact-navigation",
+      "title": "Collapsible navigation and full-width page layout",
+      "manualAnchor": "getting-started",
+      "fields": ["Expand navigation", "Collapse navigation", "Current app"],
+      "tests": [
+        "tests/sidebar.spec.ts",
+        "tests/app-layout.spec.ts",
+        "tests/full-qa.spec.ts"
+      ]
+    },
+    {
+      "id": "progressive-editor",
+      "title": "Contextual feature panel and expandable fields",
+      "manualAnchor": "features",
+      "fields": [
+        "Details & completion",
+        "Scheduling options",
+        "Optional tasks"
+      ],
+      "tests": ["tests/feature-editor-refinements.spec.ts"]
+    },
+    {
+      "id": "save-review",
+      "title": "Scheduling review and verified saving",
+      "manualAnchor": "save-review",
+      "fields": ["Review scheduling changes", "Save changes", "Keep editing"],
+      "tests": [
+        "tests/save-review.spec.ts",
+        "tests/verified-save.test.ts",
+        "tests/scheduling-review.test.ts"
+      ]
+    },
+    {
+      "id": "what-if",
+      "title": "Temporary What-if workspace",
+      "manualAnchor": "what-if",
+      "fields": [
+        "What-if planning",
+        "Compare with saved plan",
+        "Apply experiment",
+        "Discard experiment",
+        "Undo last change"
+      ],
+      "tests": ["tests/what-if.test.ts", "tests/what-if.spec.ts"]
+    },
+    {
+      "id": "feature-leave",
+      "title": "Continuous feature leave shading, overlapping calendars and accessible details",
+      "manualAnchor": "feature-leave",
+      "fields": [
+        "Leave details",
+        "Leave details for Feature",
+        "Feature leave details",
+        "Feature leave dates and people",
+        "Partial leave impact",
+        "All unavailable"
+      ],
+      "tests": ["tests/feature-leave.test.ts", "tests/feature-leave.spec.ts"]
+    },
+    {
+      "id": "feature-blocked",
+      "title": "Explicit blocked feature display without schedule changes",
+      "manualAnchor": "feature-blocked",
+      "fields": ["Feature blocked", "Blocked"],
+      "tests": [
+        "tests/feature-blocked.test.ts",
+        "tests/feature-blocked.spec.ts",
+        "tests/view-preferences.test.ts",
+        "tests/date-status.spec.ts"
+      ]
+    },
+    {
+      "id": "stakeholder-mode",
+      "title": "Stakeholder screen-sharing display mode",
+      "manualAnchor": "stakeholder-mode",
+      "fields": ["Delivery Studio logo", "Stakeholder mode"],
+      "tests": ["tests/stakeholder-mode.spec.ts", "tests/sidebar.spec.ts"]
+    },
+    {
+      "id": "managed-runtime",
+      "title": "Portable application start, quit and saved-data retention",
+      "manualAnchor": "managed-runtime",
+      "fields": ["Quit Delivery Studio", "Delivery Studio stopped"],
+      "tests": [
+        "tests/managed-controls.spec.ts",
+        "tests/managed-runtime.test.ts",
+        "tests/local-runtime.test.ts"
+      ]
+    },
+    {
+      "id": "sample-workspace",
+      "title": "Isolated sample and local beginner guides",
+      "manualAnchor": "sample-workspace",
+      "fields": [
+        "Try sample workspace",
+        "Sample workspace",
+        "Reset sample",
+        "Open my saved planner",
+        "First-plan walkthrough",
+        "Download and installation",
+        "Temporary sample"
+      ],
+      "tests": [
+        "tests/sample-workspace.test.ts",
+        "tests/sample-workspace.spec.ts"
+      ]
+    },
+    {
+      "id": "ignore-leave",
+      "title": "Feature scheduling without personal leave",
+      "manualAnchor": "ignore-leave",
+      "fields": ["Ignore leave"],
+      "tests": ["tests/ignore-leave.test.ts", "tests/ignore-leave.spec.ts"]
+    },
+    {
+      "id": "feature-overview",
+      "title": "Read-only feature forecast, effort and constraints overview",
+      "manualAnchor": "feature-overview",
+      "fields": [
+        "Feature overview",
+        "Scheduled start",
+        "Forecast delivery",
+        "Elapsed duration",
+        "Team effort",
+        "Per-person breakdown",
+        "Estimated effort",
+        "Remaining effort",
+        "Planned allocation",
+        "Who determines delivery?",
+        "Person delivery timeline",
+        "What shapes this forecast?",
+        "Ignore leave",
+        "Keep other delivery dates",
+        "Close overview",
+        "Edit feature",
+        "View on timeline",
+        "Saved estimate"
+      ],
+      "tests": [
+        "tests/feature-overview.test.ts",
+        "tests/feature-overview.spec.ts"
+      ]
+    }
+  ]
+}
