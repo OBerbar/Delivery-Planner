@@ -2,7 +2,7 @@
 
 Delivery Studio helps you visualize people, capacity, leave and delivery changes alongside your existing project-management tool. It runs locally in your browser. The portable download includes everything needed; you do not need Node.js, Git, or a terminal.
 
-These are **unsigned beta downloads**. Mac builds are not notarized and Windows may warn about an unknown publisher. Only open a download you trust. Windows 10 and 11 execution still needs the owner's native checks before we recommend a public launch.
+These are **unsigned beta downloads**. Mac builds are not notarized and Windows may warn about an unknown publisher. Only open a download you trust. Native Windows 10 and 11 execution is not yet verified.
 
 ## Choose your download
 
@@ -66,7 +66,7 @@ Use **App settings → Export full backup** to keep a backup somewhere safe. To 
 
 Re-extract the entire ZIP and check the processor choice. Startup errors show a message; `delivery-studio.log` in the saved-data folder has details. If another launch is starting or stopping, wait a moment and try again. Restart your computer if it remains stuck. Do not delete the saved-data folder to fix startup: it contains your plans.
 
-## Owner checklist: test on Windows 10 and Windows 11
+## Contributor checklist: test on Windows 10 and Windows 11
 
 On each computer, record the OS version and test the actual downloaded/extracted ZIP using your normal account:
 

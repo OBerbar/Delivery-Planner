@@ -595,3 +595,5 @@ Apply and Discard return to normal planning. Normal Undo can reverse a successfu
 
 - **2026-10-13:** Public source edition prepared with fictional setup examples. Earlier internal verification and planning records are not part of this distribution.
 - **2026-10-20:** Version 1.0.0-beta.1 adds the feature overview and Ignore leave option, and begins canonical GitHub source, tagged release and checksum tracking. Personal data remains private.
+
+- **2026-10-21:** Public documentation now separates user/contributor guidance from private marketing and launch-planning material. Installation notes retain the beta testing limitations. App behavior and saved data are unchanged.
