@@ -2,6 +2,11 @@
 
 All released changes are recorded here. Versions follow semantic versioning; beta releases remain prereleases while native platform checks are incomplete.
 
+## Unreleased
+
+- Update development tooling to remove the vulnerable shell-quote dependency version (GHSA-pqg4-j6r4-53mv).
+- Pin CI actions to exact commits, avoid retaining checkout credentials, and check dependency advisories during CI.
+
 ## 1.0.0-beta.1 — 2026-10-20
 
 First complete public source and portable beta release.
