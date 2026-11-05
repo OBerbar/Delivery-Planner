@@ -1,9 +1,6 @@
-import {
-  dayLabel,
-  personDayLabel,
-  dayLength,
-  remainingFeatureDays,
-} from "../lib/working-days";
+import { personDayLabel, dayLength } from "../lib/working-days";
+import { featureTimelineRows } from "../lib/timeline-occurrences";
+import { groupOccurrences } from "../lib/occurrences";
 import { usePlanningMode } from "../lib/planning-mode";
 import { workCapacityNote } from "../lib/capacity-notes";
 import { DelayExplanation } from "./DelayExplanation";
@@ -30,11 +27,7 @@ import {
 import { Button, Empty, Pick, ErrorText } from "./ui";
 import { today, type PlannerState, type Feature } from "../lib/model";
 import { dateStatus, featureStatus, statusLabels } from "../lib/date-status";
-import {
-  featureWork,
-  featureEstimateLabel,
-  featureAssignees,
-} from "../lib/feature-work";
+import { featureWork, featureAssignees } from "../lib/feature-work";
 import {
   readTimelinePreferences,
   writeTimelinePreferences,
@@ -51,24 +44,7 @@ import {
   peopleTimelineRows,
   type TimelineDisplayRow,
 } from "../lib/timeline-people";
-import {
-  plus,
-  days,
-  displayDate,
-  type Schedule,
-  type TaskForecast,
-} from "../lib/planning";
-interface Row {
-  id: string;
-  feature: Feature;
-  title: string;
-  sub?: string;
-  personId?: string;
-  taskId?: string;
-  forecast: TaskForecast;
-  color: string;
-  child?: boolean;
-}
+import { plus, days, displayDate, type Schedule } from "../lib/planning";
 interface TimelineProps {
   focusFeatureId?: string;
   stakeholderMode?: boolean;
@@ -236,16 +212,46 @@ function TimelineView({
               viewport < 600 ? 14 : 5,
               (viewport - labelWidth) / baseDays,
             ),
-    width = cell * dates.length,
-    rowHeight = 72;
+    width = cell * dates.length;
   const availability = calendarEvents(state, appId, start, dates.at(-1)!);
   const featureLeaves = useMemo(
     () =>
       new Map(
-        features.map((feature) => [
-          feature.id,
-          featureLeaveDays(state, feature, forecast, start, dates.at(-1)!),
-        ]),
+        groupOccurrences(features).map((group) => {
+          const byDate = new Map<
+            string,
+            ReturnType<typeof featureLeaveDays>[number]
+          >();
+          for (const feature of group)
+            for (const day of featureLeaveDays(
+              state,
+              feature,
+              forecast,
+              start,
+              dates.at(-1)!,
+            )) {
+              const previous = byDate.get(day.date);
+              const people = [
+                ...new Map(
+                  [...(previous?.people ?? []), ...day.people].map((p) => [
+                    p.personId,
+                    p,
+                  ]),
+                ).values(),
+              ];
+              byDate.set(day.date, {
+                ...day,
+                people,
+                coverage: people.every((p) => p.remainingHours <= 0.000001)
+                  ? "full"
+                  : "partial",
+              });
+            }
+          return [
+            group[0].id,
+            [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)),
+          ] as const;
+        }),
       ),
     [state, forecast, start, dates.at(-1), features],
   );
@@ -255,55 +261,6 @@ function TimelineView({
       new Map(values.map((day) => [day.date, day])),
     ]),
   );
-  const rows = useMemo(() => {
-    const out: Row[] = [];
-    for (const f of features) {
-      const r = forecast.features[f.id];
-      if (view === "features") {
-        out.push({
-          id: f.id,
-          feature: f,
-          title: f.title,
-          sub: f.tasks.length
-            ? `${f.tasks.length} tasks · ${dayLabel(remainingFeatureDays(state, f, forecast))} remaining`
-            : `${featureEstimateLabel(f)} · ${f.assigneeIds?.length ?? 0} assignee${f.assigneeIds?.length === 1 ? "" : "s"}`,
-          forecast: { start: r.start, end: r.end, days: [], reason: r.warning },
-          color: app.color,
-        });
-      }
-      if (!stakeholderMode && view === "features" && expanded.includes(f.id))
-        for (const t of featureWork(state, f).filter(
-          (t) => person === "all" || t.personId === person,
-        )) {
-          out.push({
-            id: t.id,
-            feature: f,
-            title: f.tasks.length
-              ? t.title
-              : state.people.find((p) => p.id === t.personId)!.name,
-            sub: `${state.people.find((p) => p.id === t.personId)!.name} · ${personDayLabel(t.hours, dayLength(state, t.personId))} · ${t.scope}`,
-            personId: t.personId,
-            taskId: t.id,
-            forecast: forecast.tasks[t.id] ?? { days: [] },
-            color:
-              dateStatus(forecast.tasks[t.id] ?? {}, currentDate) === "done"
-                ? "#34886e"
-                : app.color,
-            child: view === "features",
-          });
-        }
-    }
-    return out;
-  }, [
-    features,
-    forecast,
-    view,
-    expanded,
-    app.color,
-    state.people,
-    person,
-    stakeholderMode,
-  ]);
   const displayRows: TimelineDisplayRow[] =
     view === "people"
       ? peopleTimelineRows(
@@ -321,25 +278,16 @@ function TimelineView({
           dates.at(-1)!,
           cell,
         )
-      : rows.map((r, i) => ({
-          ...r,
-          height: rowHeight,
-          top: i * rowHeight,
-          bars: [
-            {
-              id: r.id,
-              feature: r.feature,
-              title: r.child ? r.title : r.feature.title,
-              forecast: r.forecast,
-              color: r.color,
-              child: r.child,
-              lane: 0,
-              taskIds: r.taskId
-                ? [r.taskId]
-                : featureWork(state, r.feature).map((t) => t.id),
-            },
-          ],
-        }));
+      : featureTimelineRows(
+          state,
+          features,
+          forecast,
+          start,
+          dates.at(-1)!,
+          cell,
+          stakeholderMode ? [] : expanded,
+          person,
+        );
   const canvasHeight = displayRows.reduce((sum, r) => sum + r.height, 0);
   const anchorByTask = new Map<string, { id: string; y: number }>();
   displayRows.forEach((row) =>
@@ -347,7 +295,7 @@ function TimelineView({
       bar.taskIds.forEach((id) =>
         anchorByTask.set(id, {
           id: `${row.id}:${bar.id}`,
-          y: row.top + (view === "people" ? 36 + bar.lane * 48 : 36),
+          y: row.top + (36 + bar.lane * 48),
         }),
       );
     }),
@@ -565,8 +513,12 @@ function TimelineView({
           </Button>
         )}
         <p className="timeline-filter-note">
-          Showing {features.length} of {allFeatures.length} features · Filters
-          change this view only. PDF includes all app work.
+          Showing {groupOccurrences(features).length} of{" "}
+          {groupOccurrences(allFeatures).length} features
+          {allFeatures.some((f) => f.occurrenceGroupId)
+            ? ` · ${features.length} occurrences`
+            : ""}{" "}
+          · Filters change this view only. PDF includes all app work.
         </p>
       </div>
       {filtered && !features.length && (
@@ -612,7 +564,7 @@ function TimelineView({
                 </span>
                 <small>
                   {view === "people" ? `${displayRows.length} people · ` : ""}
-                  {features.length} features
+                  {groupOccurrences(features).length} features
                 </small>
               </div>
               <div className="timeline-date-head" style={{ width }}>
@@ -976,7 +928,7 @@ function TimelineView({
                           f.end >= start &&
                           f.start <= dates.at(-1)!;
                         const personStyle =
-                          view === "people"
+                          view === "people" || r.bars.length > 1
                             ? { top: 16 + bar.lane * 48, height: 40 }
                             : {};
                         const label =
@@ -984,7 +936,7 @@ function TimelineView({
                             ? `${bar.title} · ${r.title}`
                             : r.child
                               ? r.title
-                              : r.feature!.title;
+                              : bar.title;
                         return visible ? (
                           <button
                             key={bar.id}
@@ -995,7 +947,7 @@ function TimelineView({
                               width: Math.max(18, (right - left) * cell - 8),
                               ...personStyle,
                             }}
-                            title={`${view === "people" ? label : r.title}: ${displayDate(f.start)} – ${displayDate(f.end)} · ${statusDetail}${f.reason ? ` · ${f.reason}` : ""}${parallelDetail}${capacityDetail ? ` · ${capacityDetail}` : ""}`}
+                            title={`${label}: ${displayDate(f.start)} – ${displayDate(f.end)} · ${statusDetail}${f.reason ? ` · ${f.reason}` : ""}${parallelDetail}${capacityDetail ? ` · ${capacityDetail}` : ""}`}
                             aria-label={`${label}: ${displayDate(f.start)} – ${displayDate(f.end)} · ${statusDetail}${f.reason ? ` · ${f.reason}` : ""}${parallelDetail}${capacityDetail ? ` · ${capacityDetail}` : ""}`}
                             onClick={() => onEdit(bar.feature)}
                           >
@@ -1021,37 +973,44 @@ function TimelineView({
                             title={`${label}: ${f.reason ?? "Not scheduled"}`}
                             onClick={() => onEdit(bar.feature)}
                           >
-                            {view === "people" ? `${bar.title} · ` : ""}
+                            {view === "people" || bar.feature.occurrenceGroupId
+                              ? `${bar.title} · `
+                              : ""}
                             {statusDetail} · {f.reason ?? "Not scheduled"}
                           </button>
                         ) : null;
                       })}
                       {view === "features" &&
                         !r.child &&
-                        r.feature?.committed &&
-                        r.feature.commitment &&
-                        r.feature.commitment.end >= start &&
-                        r.feature.commitment.end <= dates.at(-1)! && (
-                          <span
-                            className="timeline-accepted-date"
-                            role="img"
-                            tabIndex={0}
-                            aria-label={`${r.feature.title}: accepted delivery date ${r.feature.commitment.end}`}
-                            title={`${r.feature.title}: accepted delivery date ${r.feature.commitment.end}`}
-                            style={{
-                              left:
-                                rawOffset(r.feature.commitment.end) * cell +
-                                cell / 2,
-                            }}
-                          >
-                            <span>
-                              Accepted{" "}
-                              {format(
-                                parseISO(r.feature.commitment.end),
-                                "MMM d",
-                              )}
-                            </span>
-                          </span>
+                        r.bars.map(
+                          ({ feature: occurrence }) =>
+                            occurrence.committed &&
+                            occurrence.commitment &&
+                            occurrence.commitment.end >= start &&
+                            occurrence.commitment.end <= dates.at(-1)! && (
+                              <span
+                                key={occurrence.id}
+                                className="timeline-accepted-date"
+                                role="img"
+                                tabIndex={0}
+                                aria-label={`${occurrence.title}: accepted delivery date ${occurrence.commitment.end}`}
+                                title={`${occurrence.title}: accepted delivery date ${occurrence.commitment.end}`}
+                                style={{
+                                  left:
+                                    rawOffset(occurrence.commitment.end) *
+                                      cell +
+                                    cell / 2,
+                                }}
+                              >
+                                <span>
+                                  Accepted{" "}
+                                  {format(
+                                    parseISO(occurrence.commitment.end),
+                                    "MMM d",
+                                  )}
+                                </span>
+                              </span>
+                            ),
                         )}
                     </div>
                   );

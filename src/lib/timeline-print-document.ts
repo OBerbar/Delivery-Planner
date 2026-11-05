@@ -181,7 +181,9 @@ function chart(
       const top =
         y +
         (page.compact
-          ? (row.height - 19) / 2
+          ? row.bars.some((b) => b.lane > 0)
+            ? 5 + bar.lane * PRINT_LANE_HEIGHT
+            : (row.height - 19) / 2
           : 9 + bar.lane * PRINT_LANE_HEIGHT);
       if (!start || !end) {
         elements.push(

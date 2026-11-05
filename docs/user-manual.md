@@ -1,6 +1,6 @@
 # Delivery Studio user manual
 
-This manual explains the local planner, with documentation updated on 2026-10-20. It is maintained with every change affecting users. Read the field tables alongside each workflow: a field can appear only after selecting a particular mode. Dates use your browser's local calendar and include both the start and end day.
+This manual explains the local planner, with documentation updated on 2026-11-05. It is maintained with every change affecting users. Read the field tables alongside each workflow: a field can appear only after selecting a particular mode. Dates use your browser's local calendar and include both the start and end day.
 
 <a id="quick-delivery-check"></a>
 
@@ -266,6 +266,25 @@ For example, three estimated working days for Alex and seven for Sam are differe
 The constraints explain current scheduling evidence, not a history of which changes caused a later delivery. Earlier competing bookings count only when they reduce the person’s available capacity. Booked and unavailable working days can overlap; do not add them into an invented calendar-day delay. Missing availability, incomplete dependencies or cycles keep their warnings and missing finish dates. Completed work retains available dates and estimates without claiming its effort is still remaining or reconstructing absent booking history. The existing **Why delayed?** workflow remains restricted to unfinished accepted commitments at risk; the overview does not broaden that control’s conditions.
 
 Tab and Shift+Tab stay within the open drawer; the Per-person breakdown disclosure and action buttons work with keyboard or touch, and long content scrolls. Opening, expanding, closing or handing off from the overview makes no database write, does not add an Undo step, and preserves saved estimates, accepted commitments and finalized plan text. View on timeline changes browser display preferences only. Reading a What-if forecast does not apply the experiment; editing from it follows the existing experimental save/Apply/Discard workflow.
+
+<a id="occurrences"></a>
+
+### Repeat a task in another sprint
+
+Keep repeated work as one feature with multiple **Occurrences**. Each occurrence appears as a separate bar on the same By feature timeline row. Gaps stay empty; overlapping runs use separate lanes within that row. By person shows each person's separate occurrence bookings. Feature-only and full timeline PDFs preserve the grouped row.
+
+1. Open an existing feature or click its timeline bar. Choose **Add occurrence** in **Occurrences**.
+2. Choose **Assigned sprint**, change the working-day or sprint estimate, and adjust assignees as needed. With a task breakdown, edit the copied task effort; that effort continues to drive scheduling.
+3. Choose **Save feature**. For example, Retest checkout can have two working days in Sprint 1, one in Sprint 2 and three in Sprint 3, with three bars and one shared title.
+4. Click a bar to edit that run, or use **Editing occurrence** to switch runs. Switching preserves unsaved drafts. **Save feature** saves all occurrence edits together; **Cancel**, Escape, Close dialog and clicking outside discard all unsaved occurrence edits.
+
+The feature title is shared. Sprint, assignees, effort, description, completion conditions, start/target dates, blocked flag, dependencies and accepted delivery dates belong to each occurrence. Creating a repeat copies estimates and scope but clears its assigned sprint, accepted commitment, blocked state and execution dates. Copied subtasks get fresh identities; internal dependencies stay connected within the new run, while external dependencies must be selected again. Existing runs keep their saved effort and accepted dates. Adding a run books its own capacity once, without an extra parent booking.
+
+Choosing a past sprint for a **new occurrence** explicitly allows it to start in that sprint, so earlier work can appear in history. Choosing a past Start no earlier than date also allows a new repeat to be backdated. Status follows scheduled dates: an earlier run can be Done while a later one is Planned. Estimates and calendars still calculate those dates; this is not a timesheet. Existing occurrences keep their planning anchors. A sprint sets the earliest start, so a run can finish after the sprint when capacity or its estimate requires more time.
+
+**Delete occurrence** removes only the selected run after confirmation; the others remain grouped even when the original run is deleted. Deleting discards other unsaved editor changes, as the confirmation explains. **Undo last change** restores a saved addition, edit or deletion together. When only one run remains, its delete action is **Delete feature**. At most 100 occurrences belong to one feature.
+
+Features shows one entry with links to its separate runs. Timeline sprint, person, status and risk filters apply to individual occurrences, so a filtered row contains only matching bars. Reordering a feature moves its occurrences together in planning priority. Sprint capacity and generated plans include each relevant occurrence independently; saved finalized plan text stays unchanged. Backups and What-if planning include the occurrences and follow their ordinary Save/Apply/Discard rules. Existing workspaces keep their original single occurrence without an occurrence migration.
 
 <a id="automatic-status"></a>
 
@@ -597,3 +616,5 @@ Apply and Discard return to normal planning. Normal Undo can reverse a successfu
 - **2026-10-20:** Version 1.0.0-beta.1 adds the feature overview and Ignore leave option, and begins canonical GitHub source, tagged release and checksum tracking. Personal data remains private.
 
 - **2026-10-21:** Public documentation now separates user/contributor guidance from private marketing and launch-planning material. Installation notes retain the beta testing limitations. App behavior and saved data are unchanged.
+
+- **2026-11-05:** Added independent task occurrences across sprints, grouped timeline/PDF rows, per-run editing and capacity, shared titles, historical sprint entry, and occurrence-safe deletion/Undo.

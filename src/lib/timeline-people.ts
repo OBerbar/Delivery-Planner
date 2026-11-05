@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import type { Feature, PlannerState } from "./model";
+import { groupOccurrences } from "./occurrences";
 import { featureWork } from "./feature-work";
 import { dateStatus, FEATURE_BLOCKED_COLOR } from "./date-status";
 import { today } from "./model";
@@ -137,7 +138,7 @@ export function peopleTimelineRows(
       personId,
       title: state.people.find((p) => p.id === personId)!.name,
       sub: bars.length
-        ? `${bars.length} assigned feature${bars.length === 1 ? "" : "s"}`
+        ? `${groupOccurrences(bars.map((b) => b.feature)).length} assigned feature${groupOccurrences(bars.map((b) => b.feature)).length === 1 ? "" : "s"}${groupOccurrences(bars.map((b) => b.feature)).length < bars.length ? ` · ${bars.length} occurrences` : ""}`
         : "No assigned features",
       bars,
       height,

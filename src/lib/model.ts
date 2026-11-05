@@ -81,6 +81,9 @@ export const featureSchema = z
     id,
     appId: id,
     title: name,
+    occurrenceGroupId: id
+      .refine((v) => v.trim().length > 0, "Group ID is required")
+      .optional(),
     description: z.string().max(10000).default(""),
     completion: z.string().max(10000).default(""),
     priority: z.number().int().min(0),
@@ -268,7 +271,21 @@ export const stateSchema = z
           : []),
       ]),
     );
+    const occurrenceGroups = new Map<
+      string,
+      { appId: string; title: string; count: number }
+    >();
     for (const f of s.features) {
+      const key = f.occurrenceGroupId ?? f.id;
+      const group = occurrenceGroups.get(key);
+      if (group) {
+        if (group.appId !== f.appId || group.title !== f.title)
+          fail("Occurrences of a feature must share the same app and title");
+        group.count++;
+        if (group.count > 100)
+          fail("A feature may have at most 100 occurrences");
+      } else
+        occurrenceGroups.set(key, { appId: f.appId, title: f.title, count: 1 });
       if (!apps.has(f.appId)) fail("Feature app is missing");
       if ((f.assigneeIds ?? []).some((p) => !pairs.has(f.appId + "|" + p)))
         fail("Main assignees must belong to the app");

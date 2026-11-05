@@ -39,6 +39,7 @@ export default defineConfig({
         "**/feature-blocked.spec.ts",
         "**/ignore-leave.spec.ts",
         "**/feature-overview.spec.ts",
+        "**/occurrences.spec.ts",
         "**/date-status-migration.spec.ts",
         "**/timeline-print.spec.ts",
         "**/parallel-work.spec.ts",
