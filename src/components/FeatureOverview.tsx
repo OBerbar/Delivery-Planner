@@ -1,3 +1,4 @@
+import { featureOccurrences, occurrenceLabel } from "../lib/occurrences";
 import { useMemo } from "react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { today, type Feature, type PlannerState } from "../lib/model";
@@ -55,6 +56,9 @@ export function FeatureOverview({
             {experiment ? " · What-if forecast" : ""}
           </p>
           <h2>{feature.title}</h2>
+          {featureOccurrences(state.features, feature).length > 1 && (
+            <p>{occurrenceLabel(state, feature)}</p>
+          )}
           <span className={`status-pill ${status}`}>
             {statusLabels[status]}
           </span>

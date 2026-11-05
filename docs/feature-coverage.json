@@ -577,6 +577,25 @@
         "tests/feature-overview.test.ts",
         "tests/feature-overview.spec.ts"
       ]
+    },
+    {
+      "id": "occurrences",
+      "title": "Repeated task occurrences with separate sprint estimates and shared timeline rows",
+      "manualAnchor": "occurrences",
+      "fields": [
+        "Occurrences",
+        "Add occurrence",
+        "Editing occurrence",
+        "Delete occurrence",
+        "Assigned sprint",
+        "Save feature"
+      ],
+      "tests": [
+        "tests/occurrences.test.ts",
+        "tests/occurrences-batch.test.ts",
+        "tests/timeline-occurrences.test.ts",
+        "tests/occurrences.spec.ts"
+      ]
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { groupOccurrences } from "../lib/occurrences";
 import { usePlanningMode } from "../lib/planning-mode";
 import { useEffect, useId, useRef, useState, type ComponentProps } from "react";
 import { Button, Label, ListBox, Select } from "@heroui/react";
@@ -96,8 +97,8 @@ export function Sidebar({
   const app =
     state.apps.find((candidate) => candidate.id === appId) ?? state.apps[0];
   if (!app) return null;
-  const featureCount = state.features.filter(
-    (feature) => feature.appId === app.id,
+  const featureCount = groupOccurrences(
+    state.features.filter((feature) => feature.appId === app.id),
   ).length;
   const memberCount = state.members.filter(
     (member) => member.appId === app.id,

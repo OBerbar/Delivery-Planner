@@ -2,6 +2,12 @@ import { dayLength, dayLabel, remainingFeatureDays } from "../lib/working-days";
 import { usePlanningMode } from "../lib/planning-mode";
 import { formError } from "../lib/model";
 import { featureStatus, statusLabels } from "../lib/date-status";
+import {
+  createOccurrence,
+  featureOccurrences,
+  groupOccurrences,
+  occurrenceLabel,
+} from "../lib/occurrences";
 import { useState } from "react";
 import {
   Plus,
@@ -90,7 +96,7 @@ export function FeatureEditor({
   forecast: Schedule;
   appId: string;
   feature?: Feature;
-  onSave: (f: Feature | null) => Promise<void>;
+  onSave: (features: Feature[], deletedIds?: string[]) => Promise<void>;
   onClose: () => void;
   busy: boolean;
 }) {
@@ -149,6 +155,55 @@ export function FeatureEditor({
     [breakdownDraft, setBreakdownDraft] = useState<Task[]>(() =>
       structuredClone(feature?.tasks ?? []),
     );
+  const selectedSaved = state.features.find((f) => f.id === draft.id);
+  const [pending, setPending] = useState<Record<string, Feature>>({});
+  const [sources, setSources] = useState<Record<string, Feature>>({});
+  const siblings = feature ? featureOccurrences(state.features, feature) : [];
+  const available = [
+    ...siblings,
+    ...Object.values(pending).filter(
+      (f) => !siblings.some((s) => s.id === f.id),
+    ),
+    ...(!siblings.some((f) => f.id === draft.id) && !pending[draft.id]
+      ? [draft]
+      : []),
+  ].map((f) => (f.id === draft.id ? draft : (pending[f.id] ?? f)));
+  const occurrenceState = {
+    ...state,
+    features: available.map((f) => ({
+      ...f,
+      occurrenceGroupId: feature?.occurrenceGroupId ?? feature?.id ?? draft.id,
+    })),
+  };
+  const selectOccurrence = (next: Feature) => {
+    setPending((p) => ({ ...p, [draft.id]: draft }));
+    setDraft({ ...structuredClone(next), title: draft.title });
+    setBreakdownDraft(structuredClone(next.tasks));
+    setTasksOpen(!!next.tasks.length);
+    setDetailsOpen(!!(next.description || next.link || next.completion));
+    setSchedulingOpen(
+      !!(
+        next.target ||
+        next.notBefore ||
+        next.committed ||
+        next.ignoreLeave ||
+        next.doesntAffectOtherWork
+      ),
+    );
+    setError("");
+  };
+  const addOccurrence = () => {
+    const next = createOccurrence(state, draft, today());
+    setSources((s) => ({
+      ...s,
+      [next.id]: structuredClone(
+        state.features.find((f) => f.id === draft.id) ??
+          sources[draft.id] ??
+          draft,
+      ),
+    }));
+    selectOccurrence(next);
+  };
   const patch = (v: Partial<Feature>) => setDraft((f) => ({ ...f, ...v }));
   const taskPatch = (id: string, v: Partial<Task>) =>
     patch({
@@ -156,38 +211,69 @@ export function FeatureEditor({
     });
   const submit = async () => {
     try {
-      const normalized = {
-        ...draft,
-        tasks: draft.tasks.map((t) => {
-          const complete = state.features.filter(
-            (f) =>
-              f.id !== draft.id &&
-              !f.tasks.length &&
-              featureWork(state, f).length &&
-              featureWork(state, f).every((w) => t.dependsOn.includes(w.id)),
-          );
-          const migratedIds = complete.flatMap((f) =>
-            featureWork(state, f).map((w) => w.id),
-          );
-          return complete.length
+      const drafts = Object.values({ ...pending, [draft.id]: draft });
+      const parsed: Feature[] = [];
+      for (const candidate of drafts) {
+        const normalized = {
+          ...candidate,
+          title: draft.title,
+          ...(!state.features.some((f) => f.id === candidate.id) &&
+          sources[candidate.id]
             ? {
-                ...t,
-                dependsOn: t.dependsOn.filter(
-                  (id) => !migratedIds.includes(id),
-                ),
-                dependsOnFeatures: [
-                  ...new Set([
-                    ...(t.dependsOnFeatures ?? []),
-                    ...complete.map((f) => f.id),
-                  ]),
-                ],
+                planningFrom: [
+                  today(),
+                  candidate.notBefore ?? today(),
+                  state.sprints.find((s) => s.id === candidate.sprintId)
+                    ?.start ?? today(),
+                ].sort()[0],
               }
-            : t;
-        }),
-      };
-      const parsed = featureSchema.parse(
-        prepareSprintEstimate(state, normalized, today(), feature),
-      );
+            : {}),
+          tasks: candidate.tasks.map((t) => {
+            const complete = state.features.filter(
+              (f) =>
+                f.id !== candidate.id &&
+                !f.tasks.length &&
+                featureWork(state, f).length &&
+                featureWork(state, f).every((w) => t.dependsOn.includes(w.id)),
+            );
+            const migratedIds = complete.flatMap((f) =>
+              featureWork(state, f).map((w) => w.id),
+            );
+            return complete.length
+              ? {
+                  ...t,
+                  dependsOn: t.dependsOn.filter(
+                    (id) => !migratedIds.includes(id),
+                  ),
+                  dependsOnFeatures: [
+                    ...new Set([
+                      ...(t.dependsOnFeatures ?? []),
+                      ...complete.map((f) => f.id),
+                    ]),
+                  ],
+                }
+              : t;
+          }),
+        };
+        try {
+          parsed.push(
+            featureSchema.parse(
+              prepareSprintEstimate(
+                state,
+                normalized,
+                today(),
+                state.features.find((f) => f.id === candidate.id) ??
+                  sources[candidate.id],
+              ),
+            ),
+          );
+        } catch (error) {
+          if (candidate.id !== draft.id) selectOccurrence(candidate);
+          throw new Error(
+            `${available.length > 1 ? `${occurrenceLabel(occurrenceState, candidate)}: ` : ""}${formError(error)}`,
+          );
+        }
+      }
       await onSave(parsed);
     } catch (e) {
       setError(formError(e));
@@ -243,7 +329,46 @@ export function FeatureEditor({
           placeholder="What are we delivering?"
           required
         />
-        <FeatureEstimates state={state} draft={draft} onChange={patch} />
+        {feature && (
+          <section className="occurrence-editor" aria-label="Occurrences">
+            <div className="section-heading">
+              <h3>Occurrences</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                isDisabled={busy || available.length >= 100}
+                onPress={addOccurrence}
+              >
+                <Plus size={15} aria-hidden="true" /> Add occurrence
+              </Button>
+            </div>
+            {available.length > 1 && (
+              <Pick
+                label="Editing occurrence"
+                value={draft.id}
+                options={available.map((f) => ({
+                  id: f.id,
+                  label: `${occurrenceLabel(occurrenceState, f)}${state.features.some((saved) => saved.id === f.id) ? "" : " · New"}`,
+                }))}
+                onChange={(id) => {
+                  const next = available.find((f) => f.id === id);
+                  if (next) selectOccurrence(next);
+                }}
+              />
+            )}
+            <p className="helper">
+              Each occurrence has its own sprint, estimate and assignees. The
+              title is shared. Save feature saves all occurrence edits; Cancel
+              discards them.
+            </p>
+          </section>
+        )}
+        <FeatureEstimates
+          key={draft.id}
+          state={state}
+          draft={draft}
+          onChange={patch}
+        />
         {state.sprints.some((s) => s.appId === appId) && (
           <Pick
             label="Assigned sprint"
@@ -365,8 +490,8 @@ export function FeatureEditor({
                   patch({
                     committed,
                     commitment:
-                      committed && feature?.committed
-                        ? feature.commitment
+                      committed && selectedSaved?.committed
+                        ? selectedSaved.commitment
                         : undefined,
                   })
                 }
@@ -381,15 +506,15 @@ export function FeatureEditor({
               groups where work starts. Later forecasts are compared with the
               accepted delivery date.
             </p>
-            {feature?.committed && draft.committed && (
+            {selectedSaved?.committed && draft.committed && (
               <div className="commitment-editor-baseline">
                 <CommitmentDates
-                  feature={feature}
-                  result={forecast.features[feature.id]}
+                  feature={selectedSaved}
+                  result={forecast.features[selectedSaved.id]}
                 />
                 <DelayExplanation
                   state={state}
-                  feature={feature}
+                  feature={selectedSaved}
                   forecast={forecast}
                   savedEditor
                 />
@@ -561,16 +686,36 @@ export function FeatureEditor({
             <Button
               variant="danger"
               onPress={async () => {
-                if (confirm("Delete this feature? You can undo this change."))
+                if (
+                  confirm(
+                    available.length > 1
+                      ? "Delete this occurrence? Other occurrences stay unchanged. Unsaved edits will be discarded. You can undo this change."
+                      : "Delete this feature? You can undo this change.",
+                  )
+                )
                   try {
-                    await onSave(null);
+                    if (state.features.some((f) => f.id === draft.id))
+                      await onSave([], [draft.id]);
+                    else {
+                      setPending((p) =>
+                        Object.fromEntries(
+                          Object.entries(p).filter(([id]) => id !== draft.id),
+                        ),
+                      );
+                      const next = available.find((f) => f.id !== draft.id)!;
+                      setDraft({
+                        ...structuredClone(next),
+                        title: draft.title,
+                      });
+                      setBreakdownDraft(structuredClone(next.tasks));
+                    }
                   } catch (e) {
                     setError(formError(e));
                   }
               }}
             >
               <Trash2 size={15} />
-              Delete feature
+              {available.length > 1 ? "Delete occurrence" : "Delete feature"}
             </Button>
           )}
           <Button variant="ghost" onPress={onClose}>
@@ -608,15 +753,21 @@ export function Features({
   const experiment = usePlanningMode();
   const [search, setSearch] = useState(""),
     [error, setError] = useState("");
-  const all = state.features
-      .filter((f) => f.appId === appId)
-      .sort((a, b) => a.priority - b.priority),
-    features = all.filter((f) =>
-      (f.title + " " + f.description)
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-    );
-  const commitments = all.filter(
+  const records = state.features
+    .filter((f) => f.appId === appId)
+    .sort((a, b) => a.priority - b.priority);
+  const groups = groupOccurrences(records);
+  const all = groups.map((group) => group[0]);
+  const features = groups
+    .filter((group) =>
+      group.some((f) =>
+        (f.title + " " + f.description)
+          .toLowerCase()
+          .includes(search.toLowerCase()),
+      ),
+    )
+    .map((group) => group[0]);
+  const commitments = records.filter(
     (f) => f.committed && !forecast.features[f.id]?.done,
   );
   const refresh = async (ids: string[]) => {
@@ -687,6 +838,129 @@ export function Features({
             const r = forecast.features[f.id],
               sprint = state.sprints.find((s) => s.id === f.sprintId),
               status = featureStatus(f, r ?? {}, forecast.asOf ?? today());
+            const occurrences = featureOccurrences(state.features, f);
+            if (occurrences.length > 1)
+              return (
+                <article className="feature-item" key={f.id}>
+                  <div className="feature-priority">
+                    {String(all.findIndex((v) => v.id === f.id) + 1).padStart(
+                      2,
+                      "0",
+                    )}
+                    <div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isIconOnly
+                        aria-label={`Move ${f.title} up`}
+                        isDisabled={busy || all[0].id === f.id}
+                        onPress={() => onMove(f.id, -1)}
+                      >
+                        <ArrowUp size={13} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isIconOnly
+                        aria-label={`Move ${f.title} down`}
+                        isDisabled={busy || all.at(-1)!.id === f.id}
+                        onPress={() => onMove(f.id, 1)}
+                      >
+                        <ArrowDown size={13} />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="feature-main">
+                    <h3>
+                      <button onClick={() => onEdit(f)}>{f.title}</button>
+                    </h3>
+                    <p>
+                      {occurrences.length} occurrences ·{" "}
+                      {dayLabel(
+                        occurrences.reduce(
+                          (sum, occurrence) =>
+                            sum +
+                            remainingFeatureDays(state, occurrence, forecast),
+                          0,
+                        ),
+                      )}{" "}
+                      remaining
+                    </p>
+                    <div className="feature-occurrence-list">
+                      {occurrences.map((occurrence) => (
+                        <article key={occurrence.id}>
+                          <button onClick={() => onEdit(occurrence)}>
+                            <strong>
+                              {occurrenceLabel(state, occurrence)}
+                            </strong>
+                            <span>
+                              {occurrence.tasks.length
+                                ? `${occurrence.tasks.length} tasks`
+                                : featureEstimateLabel(occurrence)}{" "}
+                              ·{" "}
+                              {displayDate(
+                                forecast.features[occurrence.id]?.start,
+                              )}{" "}
+                              –{" "}
+                              {displayDate(
+                                forecast.features[occurrence.id]?.end,
+                              )}
+                            </span>
+                            <span
+                              className={`status-pill ${featureStatus(occurrence, forecast.features[occurrence.id] ?? {}, forecast.asOf ?? today())}`}
+                            >
+                              {
+                                statusLabels[
+                                  featureStatus(
+                                    occurrence,
+                                    forecast.features[occurrence.id] ?? {},
+                                    forecast.asOf ?? today(),
+                                  )
+                                ]
+                              }
+                            </span>
+                          </button>
+                          <CommitmentDates
+                            feature={occurrence}
+                            result={forecast.features[occurrence.id]}
+                          />
+                          <DelayExplanation
+                            state={state}
+                            feature={occurrence}
+                            forecast={forecast}
+                          />
+                          {occurrence.committed &&
+                            !forecast.features[occurrence.id]?.done && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                aria-label={`Refresh commitment date for ${f.title} · ${occurrenceLabel(state, occurrence)}`}
+                                isDisabled={
+                                  busy ||
+                                  experiment ||
+                                  !forecast.features[occurrence.id]?.end
+                                }
+                                isPending={busy}
+                                onPress={() => refresh([occurrence.id])}
+                              >
+                                <RefreshCw size={13} aria-hidden="true" />{" "}
+                                Refresh commitment date
+                              </Button>
+                            )}
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    isIconOnly
+                    aria-label={`Edit ${f.title}`}
+                    onPress={() => onEdit(f)}
+                  >
+                    <Pencil size={16} />
+                  </Button>
+                </article>
+              );
             return (
               <article className="feature-item" key={f.id}>
                 <div className="feature-priority">

@@ -1,3 +1,4 @@
+import { featureTimelineRows } from "./timeline-occurrences";
 import { dayLabel, taskDayTotals } from "./working-days";
 import { addMonths, format, getDay, parseISO } from "date-fns";
 import type { PlannerState } from "./model";
@@ -115,33 +116,19 @@ export function timelinePrintPages(
               window.end,
               cell,
             )
-          : features.map((f) => ({
-              id: f.id,
-              title: f.title,
-              feature: f,
-              height: 44,
-              top: 0,
-              sub: `${forecast.features[f.id]?.start ?? "Not scheduled"} - ${forecast.features[f.id]?.end ?? "Not scheduled"}`,
-              bars: [
-                {
-                  id: f.id,
-                  feature: f,
-                  title: f.title,
-                  forecast: {
-                    start: forecast.features[f.id]?.start,
-                    end: forecast.features[f.id]?.end,
-                    days: [],
-                    reason: forecast.features[f.id]?.warning,
-                  },
-                  color: f.blocked
-                    ? FEATURE_BLOCKED_COLOR
-                    : forecast.features[f.id]?.done
-                      ? "#34886e"
-                      : app.color,
-                  taskIds: featureWork(state, f).map((t) => t.id),
-                  lane: 0,
-                },
-              ],
+          : featureTimelineRows(
+              state,
+              features,
+              forecast,
+              window.start,
+              window.end,
+              cell,
+            ).map((row) => ({
+              ...row,
+              sub:
+                row.bars.length === 1
+                  ? `${row.bars[0].forecast.start ?? "Not scheduled"} - ${row.bars[0].forecast.end ?? "Not scheduled"}`
+                  : row.sub,
             }));
       const rows: PrintRow[] = [];
       for (const row of source) {
@@ -187,7 +174,13 @@ export function timelinePrintPages(
             .filter((b) => b.lane >= lane && b.lane < lane + maxLanes)
             .map((b) => ({ ...b, lane: b.lane - lane }));
           const height = compact
-            ? Math.max(28, labelHeight)
+            ? Math.max(
+                28,
+                labelHeight,
+                lanes > 1
+                  ? Math.min(maxLanes, lanes - lane) * PRINT_LANE_HEIGHT + 10
+                  : 0,
+              )
             : Math.max(
                 44,
                 Math.min(PRINT_BODY_HEIGHT, labelHeight + (lane > 0 ? 11 : 0)),
@@ -201,7 +194,9 @@ export function timelinePrintPages(
               ? [row.personId]
               : [
                   ...new Set(
-                    featureWork(state, row.feature!).map((t) => t.personId),
+                    row.bars.flatMap((bar) =>
+                      featureWork(state, bar.feature).map((t) => t.personId),
+                    ),
                   ),
                 ],
             bars,

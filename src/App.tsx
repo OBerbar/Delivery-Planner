@@ -1,8 +1,9 @@
 import {
-  applyFeatureChange,
+  applyFeatureChanges,
   describeDeliveryChanges,
   type DeliveryChange,
 } from "./lib/changes";
+import { groupOccurrences } from "./lib/occurrences";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Layers, Plus, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { Button, ErrorText } from "./components/ui";
@@ -228,25 +229,28 @@ export default function App({
     }
   };
   const reorder = (from: string, to: string) => {
-    const ordered = features.slice().sort((a, b) => a.priority - b.priority);
-    const a = ordered.findIndex((f) => f.id === from),
-      b = ordered.findIndex((f) => f.id === to);
-    if (a < 0 || b < 0) return;
-    const [moved] = ordered.splice(a, 1);
-    ordered.splice(b, 0, moved);
+    const groups = groupOccurrences(
+      features.slice().sort((a, b) => a.priority - b.priority),
+    );
+    const a = groups.findIndex((group) => group.some((f) => f.id === from));
+    const b = groups.findIndex((group) => group.some((f) => f.id === to));
+    if (a < 0 || b < 0 || a === b) return;
+    const [moved] = groups.splice(a, 1);
+    groups.splice(b, 0, moved);
+    const priorities = new Map(groups.flat().map((f, index) => [f.id, index]));
     safeSave({
       ...state,
       features: state.features.map((f) =>
-        f.appId === app.id
-          ? { ...f, priority: ordered.findIndex((v) => v.id === f.id) }
-          : f,
+        priorities.has(f.id) ? { ...f, priority: priorities.get(f.id)! } : f,
       ),
     });
   };
   const move = (id: string, direction: number) => {
-    const sorted = features.slice().sort((a, b) => a.priority - b.priority),
-      index = sorted.findIndex((f) => f.id === id);
-    if (sorted[index + direction]) reorder(id, sorted[index + direction].id);
+    const groups = groupOccurrences(
+      features.slice().sort((a, b) => a.priority - b.priority),
+    );
+    const index = groups.findIndex((group) => group.some((f) => f.id === id));
+    if (groups[index + direction]) reorder(id, groups[index + direction][0].id);
   };
   const applyExperiment = async () => {
     if (!experiment || experimentLock.current || !experimentChanged) return;
@@ -561,7 +565,7 @@ export default function App({
                       <p>
                         {a.archived
                           ? "Archived"
-                          : `${state.members.filter((m) => m.appId === a.id).length} people · ${fs.length} features`}
+                          : `${state.members.filter((m) => m.appId === a.id).length} people · ${groupOccurrences(fs).length} features`}
                       </p>
                       <div className="overview-card-footer">
                         <span>Latest forecast</span>
@@ -615,12 +619,8 @@ export default function App({
             feature={editing === "new" ? undefined : editing}
             busy={saving}
             onClose={closeEditor}
-            onSave={async (f) => {
-              const next = applyFeatureChange(
-                state,
-                f,
-                editing === "new" ? undefined : editing.id,
-              );
+            onSave={async (changed, deletedIds = []) => {
+              const next = applyFeatureChanges(state, changed, deletedIds);
               await save(next);
               closeEditor();
             }}
