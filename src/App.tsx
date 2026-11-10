@@ -40,6 +40,7 @@ import {
   type Experiment,
 } from "./lib/what-if";
 import { WhatIfBanner } from "./components/WhatIfBanner";
+import { ViewPreferencesProvider } from "./lib/use-view-preferences";
 const nav = sidebarNavigation;
 const headings: Record<string, [string, string]> = {
   timeline: ["Timeline", "Delivery dates, people and availability."],
@@ -359,274 +360,276 @@ export default function App({
     .sort();
   return (
     <PlanningModeContext.Provider value={!!experiment}>
-      <div className="app-shell">
-        <Sidebar
-          sample={sample}
-          stakeholderMode={stakeholderMode}
-          onToggleStakeholderMode={toggleStakeholderMode}
-          state={state}
-          appId={app.id}
-          page={page}
-          onSelectApp={selectApp}
-          onNavigate={(next) => {
-            setOverviewId(null);
-            setTimelineFocus(undefined);
-            setPage(next);
-          }}
-          onAddApp={() => {
-            if (!experiment) setWizard(true);
-          }}
-          canUndo={experiment ? !!experiment.history.length : planner.canUndo}
-          busy={saving || !!review}
-          onUndo={async () => {
-            try {
-              if (experiment) setExperiment(undoExperiment(experiment));
-              else await planner.undo();
-              setImpacts([]);
-              setNotice(
-                experiment
-                  ? "Last experiment change undone."
-                  : "Last change undone.",
-              );
-            } catch (e) {
-              setError((e as Error).message);
-            }
-          }}
-        />
-        <main className="main-area" key={experiment ? "experiment" : "saved"}>
-          {banner}
-          <div className="page-content">
-            <div className="page-heading">
-              <div>
-                <span className="eyebrow">
-                  {page === "overview"
-                    ? "THE BIGGER PICTURE"
-                    : `${app.name.toUpperCase()} / ${nav.find((n) => n.id === page)?.label.toUpperCase()}`}
-                </span>
-                <h1>{heading[0]}</h1>
-                <p>{heading[1]}</p>
-              </div>
-              {page === "timeline" && !experiment && (
-                <Button
-                  variant="outline"
-                  isDisabled={saving || !!review}
-                  onPress={() => {
-                    setExperiment(
-                      beginExperiment(planner.state, planner.revision),
-                    );
-                    setError("");
-                    setNotice("");
-                    setImpacts([]);
-                  }}
-                >
-                  What-if planning
-                </Button>
-              )}
-              {page !== "overview" && (
-                <span
-                  className="app-badge"
-                  style={{ color: app.color, background: app.color + "12" }}
-                >
-                  <Layers size={14} />
-                  {app.archived
-                    ? "Archived"
-                    : `${state.members.filter((m) => m.appId === app.id).length} people`}
-                </span>
-              )}
-            </div>
-            {experiment && (
-              <WhatIfBanner
-                sample={sample}
-                comparison={comparison}
-                changed={experimentChanged}
-                busy={saving}
-                onApply={applyExperiment}
-                onDiscard={discardExperiment}
-              />
-            )}
-            <ErrorText text={error} />
-            {notice && (
-              <div className="notice" role="status">
-                <CheckCircle2 size={16} />
-                {notice}
-                <button
-                  aria-label="Dismiss message"
-                  onClick={() => setNotice("")}
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            {page === "timeline" && (
-              <>
-                <Timeline
-                  {...{ state, forecast }}
-                  stakeholderMode={stakeholderMode}
-                  appId={app.id}
-                  onEdit={setEditing}
-                  onAdd={() => setEditing("new")}
-                  onReorder={reorder}
-                  focusFeatureId={timelineFocus}
-                />
-                <DeliveryImpacts changes={impacts} reason={impactReason} />
-                <div className="timeline-bottom">
-                  <p>
-                    <span className="green-dot" />
-                    Calendars, leave, and dependencies are reflected in every
-                    forecast.
-                  </p>
-                  <span>
-                    Last forecast:{" "}
-                    {dates.at(-1)
-                      ? displayDate(dates.at(-1))
-                      : "Add work to begin"}
+      <ViewPreferencesProvider key={app.id} appId={app.id} state={state}>
+        <div className="app-shell">
+          <Sidebar
+            sample={sample}
+            stakeholderMode={stakeholderMode}
+            onToggleStakeholderMode={toggleStakeholderMode}
+            state={state}
+            appId={app.id}
+            page={page}
+            onSelectApp={selectApp}
+            onNavigate={(next) => {
+              setOverviewId(null);
+              setTimelineFocus(undefined);
+              setPage(next);
+            }}
+            onAddApp={() => {
+              if (!experiment) setWizard(true);
+            }}
+            canUndo={experiment ? !!experiment.history.length : planner.canUndo}
+            busy={saving || !!review}
+            onUndo={async () => {
+              try {
+                if (experiment) setExperiment(undoExperiment(experiment));
+                else await planner.undo();
+                setImpacts([]);
+                setNotice(
+                  experiment
+                    ? "Last experiment change undone."
+                    : "Last change undone.",
+                );
+              } catch (e) {
+                setError((e as Error).message);
+              }
+            }}
+          />
+          <main className="main-area" key={experiment ? "experiment" : "saved"}>
+            {banner}
+            <div className="page-content">
+              <div className="page-heading">
+                <div>
+                  <span className="eyebrow">
+                    {page === "overview"
+                      ? "THE BIGGER PICTURE"
+                      : `${app.name.toUpperCase()} / ${nav.find((n) => n.id === page)?.label.toUpperCase()}`}
                   </span>
+                  <h1>{heading[0]}</h1>
+                  <p>{heading[1]}</p>
                 </div>
-              </>
-            )}
-            {page === "features" && (
-              <>
-                <Features
-                  {...{ state, forecast }}
+                {page === "timeline" && !experiment && (
+                  <Button
+                    variant="outline"
+                    isDisabled={saving || !!review}
+                    onPress={() => {
+                      setExperiment(
+                        beginExperiment(planner.state, planner.revision),
+                      );
+                      setError("");
+                      setNotice("");
+                      setImpacts([]);
+                    }}
+                  >
+                    What-if planning
+                  </Button>
+                )}
+                {page !== "overview" && (
+                  <span
+                    className="app-badge"
+                    style={{ color: app.color, background: app.color + "12" }}
+                  >
+                    <Layers size={14} />
+                    {app.archived
+                      ? "Archived"
+                      : `${state.members.filter((m) => m.appId === app.id).length} people`}
+                  </span>
+                )}
+              </div>
+              {experiment && (
+                <WhatIfBanner
+                  sample={sample}
+                  comparison={comparison}
+                  changed={experimentChanged}
+                  busy={saving}
+                  onApply={applyExperiment}
+                  onDiscard={discardExperiment}
+                />
+              )}
+              <ErrorText text={error} />
+              {notice && (
+                <div className="notice" role="status">
+                  <CheckCircle2 size={16} />
+                  {notice}
+                  <button
+                    aria-label="Dismiss message"
+                    onClick={() => setNotice("")}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              {page === "timeline" && (
+                <>
+                  <Timeline
+                    {...{ state, forecast }}
+                    stakeholderMode={stakeholderMode}
+                    appId={app.id}
+                    onEdit={setEditing}
+                    onAdd={() => setEditing("new")}
+                    onReorder={reorder}
+                    focusFeatureId={timelineFocus}
+                  />
+                  <DeliveryImpacts changes={impacts} reason={impactReason} />
+                  <div className="timeline-bottom">
+                    <p>
+                      <span className="green-dot" />
+                      Calendars, leave, and dependencies are reflected in every
+                      forecast.
+                    </p>
+                    <span>
+                      Last forecast:{" "}
+                      {dates.at(-1)
+                        ? displayDate(dates.at(-1))
+                        : "Add work to begin"}
+                    </span>
+                  </div>
+                </>
+              )}
+              {page === "features" && (
+                <>
+                  <Features
+                    {...{ state, forecast }}
+                    appId={app.id}
+                    onEdit={setEditing}
+                    onOverview={(feature) => {
+                      overviewTrigger.current =
+                        document.activeElement instanceof HTMLElement
+                          ? document.activeElement
+                          : null;
+                      setOverviewId(feature.id);
+                    }}
+                    onAdd={() => setEditing("new")}
+                    onMove={move}
+                    onRefreshCommitments={refreshFeatureCommitments}
+                    busy={saving}
+                  />
+                  <DeliveryImpacts changes={impacts} reason={impactReason} />
+                </>
+              )}{" "}
+              {page === "team" && (
+                <Team
+                  key={app.id}
+                  state={state}
                   appId={app.id}
-                  onEdit={setEditing}
-                  onOverview={(feature) => {
-                    overviewTrigger.current =
-                      document.activeElement instanceof HTMLElement
-                        ? document.activeElement
-                        : null;
-                    setOverviewId(feature.id);
-                  }}
-                  onAdd={() => setEditing("new")}
-                  onMove={move}
-                  onRefreshCommitments={refreshFeatureCommitments}
+                  onSave={save}
                   busy={saving}
                 />
-                <DeliveryImpacts changes={impacts} reason={impactReason} />
-              </>
-            )}{" "}
-            {page === "team" && (
-              <Team
-                key={app.id}
-                state={state}
-                appId={app.id}
-                onSave={save}
-                busy={saving}
-              />
-            )}{" "}
-            {page === "sprints" && (
-              <Sprints
-                state={state}
-                appId={app.id}
-                forecast={forecast}
-                onSave={save}
-                busy={saving}
-                onRefreshCommitments={refreshFeatureCommitments}
-              />
-            )}{" "}
-            {page === "settings" && (
-              <Settings
-                key={app.id}
-                state={state}
-                appId={app.id}
-                onSave={save}
-                onRestore={restore}
-                busy={saving}
-              />
-            )}{" "}
-            {page === "overview" && (
-              <div className="overview-grid">
-                {state.apps.map((a) => {
-                  const fs = state.features.filter((f) => f.appId === a.id),
-                    end = fs
-                      .flatMap((f) =>
-                        forecast.features[f.id]?.end
-                          ? [forecast.features[f.id].end!]
-                          : [],
-                      )
-                      .sort()
-                      .at(-1);
-                  return (
-                    <button
-                      className="overview-card"
-                      key={a.id}
-                      onClick={() => selectApp(a.id)}
-                    >
-                      <div className="card-row">
-                        <span
-                          className="app-icon"
-                          style={{ background: a.color }}
-                        >
-                          {a.name[0]}
-                        </span>
-                        <ArrowUpRight size={20} />
-                      </div>
-                      <h2>{a.name}</h2>
-                      <p>
-                        {a.archived
-                          ? "Archived"
-                          : `${state.members.filter((m) => m.appId === a.id).length} people · ${groupOccurrences(fs).length} features`}
-                      </p>
-                      <div className="overview-card-footer">
-                        <span>Latest forecast</span>
-                        <strong>{displayDate(end)}</strong>
-                      </div>
-                    </button>
-                  );
-                })}
-                <button
-                  className="overview-card add-app-card"
-                  disabled={!!experiment || saving}
-                  onClick={() => setWizard(true)}
-                >
-                  <Plus size={30} />
-                  <h3>Make space for another app</h3>
-                  <p>A new team. A new roadmap. Same clarity.</p>
-                </button>
-              </div>
-            )}
-          </div>
-          <footer className="app-footer">
-            DELIVERY STUDIO<span>Built for a clearer working day.</span>
-          </footer>
-        </main>
-        <SaveReview review={review} onDecision={decideReview} />
-        {overviewId && state.features.some((f) => f.id === overviewId) && (
-          <FeatureOverview
-            state={state}
-            feature={state.features.find((f) => f.id === overviewId)!}
-            forecast={forecast}
-            busy={saving}
-            onClose={() => setOverviewId(null)}
-            onEdit={() => {
-              editorReturnFocus.current = overviewTrigger.current;
-              setEditing(state.features.find((f) => f.id === overviewId)!);
-              setOverviewId(null);
-            }}
-            onTimeline={() => {
-              setTimelineFocus(overviewId);
-              setOverviewId(null);
-              setPage("timeline");
-            }}
-          />
-        )}
-        {editing && (
-          <FeatureEditor
-            key={editing === "new" ? "new" : editing.id}
-            state={state}
-            forecast={forecast}
-            appId={app.id}
-            feature={editing === "new" ? undefined : editing}
-            busy={saving}
-            onClose={closeEditor}
-            onSave={async (changed, deletedIds = []) => {
-              const next = applyFeatureChanges(state, changed, deletedIds);
-              await save(next);
-              closeEditor();
-            }}
-          />
-        )}
-      </div>
+              )}{" "}
+              {page === "sprints" && (
+                <Sprints
+                  state={state}
+                  appId={app.id}
+                  forecast={forecast}
+                  onSave={save}
+                  busy={saving}
+                  onRefreshCommitments={refreshFeatureCommitments}
+                />
+              )}{" "}
+              {page === "settings" && (
+                <Settings
+                  key={app.id}
+                  state={state}
+                  appId={app.id}
+                  onSave={save}
+                  onRestore={restore}
+                  busy={saving}
+                />
+              )}{" "}
+              {page === "overview" && (
+                <div className="overview-grid">
+                  {state.apps.map((a) => {
+                    const fs = state.features.filter((f) => f.appId === a.id),
+                      end = fs
+                        .flatMap((f) =>
+                          forecast.features[f.id]?.end
+                            ? [forecast.features[f.id].end!]
+                            : [],
+                        )
+                        .sort()
+                        .at(-1);
+                    return (
+                      <button
+                        className="overview-card"
+                        key={a.id}
+                        onClick={() => selectApp(a.id)}
+                      >
+                        <div className="card-row">
+                          <span
+                            className="app-icon"
+                            style={{ background: a.color }}
+                          >
+                            {a.name[0]}
+                          </span>
+                          <ArrowUpRight size={20} />
+                        </div>
+                        <h2>{a.name}</h2>
+                        <p>
+                          {a.archived
+                            ? "Archived"
+                            : `${state.members.filter((m) => m.appId === a.id).length} people · ${groupOccurrences(fs).length} features`}
+                        </p>
+                        <div className="overview-card-footer">
+                          <span>Latest forecast</span>
+                          <strong>{displayDate(end)}</strong>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <button
+                    className="overview-card add-app-card"
+                    disabled={!!experiment || saving}
+                    onClick={() => setWizard(true)}
+                  >
+                    <Plus size={30} />
+                    <h3>Make space for another app</h3>
+                    <p>A new team. A new roadmap. Same clarity.</p>
+                  </button>
+                </div>
+              )}
+            </div>
+            <footer className="app-footer">
+              DELIVERY STUDIO<span>Built for a clearer working day.</span>
+            </footer>
+          </main>
+          <SaveReview review={review} onDecision={decideReview} />
+          {overviewId && state.features.some((f) => f.id === overviewId) && (
+            <FeatureOverview
+              state={state}
+              feature={state.features.find((f) => f.id === overviewId)!}
+              forecast={forecast}
+              busy={saving}
+              onClose={() => setOverviewId(null)}
+              onEdit={() => {
+                editorReturnFocus.current = overviewTrigger.current;
+                setEditing(state.features.find((f) => f.id === overviewId)!);
+                setOverviewId(null);
+              }}
+              onTimeline={() => {
+                setTimelineFocus(overviewId);
+                setOverviewId(null);
+                setPage("timeline");
+              }}
+            />
+          )}
+          {editing && (
+            <FeatureEditor
+              key={editing === "new" ? "new" : editing.id}
+              state={state}
+              forecast={forecast}
+              appId={app.id}
+              feature={editing === "new" ? undefined : editing}
+              busy={saving}
+              onClose={closeEditor}
+              onSave={async (changed, deletedIds = []) => {
+                const next = applyFeatureChanges(state, changed, deletedIds);
+                await save(next);
+                closeEditor();
+              }}
+            />
+          )}
+        </div>
+      </ViewPreferencesProvider>
     </PlanningModeContext.Provider>
   );
 }

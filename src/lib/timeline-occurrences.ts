@@ -66,8 +66,10 @@ export function featureTimelineRows(
   end: string,
   cell: number,
   expanded: string[] = [],
-  person = "all",
+  person: string | string[] = "all",
 ): TimelineDisplayRow[] {
+  const people =
+    typeof person === "string" ? (person === "all" ? [] : [person]) : person;
   const rows: TimelineDisplayRow[] = [];
   let top = 0;
   const append = (row: Omit<TimelineDisplayRow, "top">) => {
@@ -119,7 +121,7 @@ export function featureTimelineRows(
     if (!expanded.includes(first.id)) continue;
     for (const feature of occurrences)
       for (const task of featureWork(state, feature).filter(
-        (t) => person === "all" || t.personId === person,
+        (t) => !people.length || people.includes(t.personId),
       )) {
         const name =
           state.people.find((p) => p.id === task.personId)?.name ??

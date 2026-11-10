@@ -1,3 +1,10 @@
+import { occurrenceGroupId } from "../lib/occurrences";
+import { PlanningFilters } from "./PlanningFilters";
+import { useViewPreferences } from "../lib/use-view-preferences";
+import {
+  hasFeatureFilters,
+  matchesFeatureFilters,
+} from "../lib/feature-filters";
 import { dayLength, dayLabel, remainingFeatureDays } from "../lib/working-days";
 import { usePlanningMode } from "../lib/planning-mode";
 import { formError } from "../lib/model";
@@ -756,17 +763,30 @@ export function Features({
   const records = state.features
     .filter((f) => f.appId === appId)
     .sort((a, b) => a.priority - b.priority);
+  const { preferences } = useViewPreferences();
+  const filtered = hasFeatureFilters(preferences);
   const groups = groupOccurrences(records);
   const all = groups.map((group) => group[0]);
-  const features = groups
-    .filter((group) =>
-      group.some((f) =>
-        (f.title + " " + f.description)
-          .toLowerCase()
-          .includes(search.toLowerCase()),
-      ),
-    )
-    .map((group) => group[0]);
+  const priorityByGroup = new Map(
+    groups.map((group, index) => [occurrenceGroupId(group[0]), index]),
+  );
+  const matchingRecords = records.filter(
+    (feature) =>
+      matchesFeatureFilters(
+        feature,
+        preferences,
+        forecast,
+        forecast.asOf ?? today(),
+      ) &&
+      (feature.title + " " + feature.description)
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+  );
+  const matchingGroups = groupOccurrences(matchingRecords);
+  const visibleByGroup = new Map(
+    matchingGroups.map((group) => [occurrenceGroupId(group[0]), group]),
+  );
+  const features = matchingGroups.map((group) => group[0]);
   const commitments = records.filter(
     (f) => f.committed && !forecast.features[f.id]?.done,
   );
@@ -807,6 +827,18 @@ export function Features({
           </Button>
         </div>
       </div>
+      <PlanningFilters
+        state={state}
+        appId={appId}
+        screen="Features"
+        count={features.length}
+        total={groups.length}
+        occurrences={
+          records.some((feature) => feature.occurrenceGroupId)
+            ? matchingRecords.length
+            : undefined
+        }
+      />
       {!!commitments.length && (
         <p className="helper commitment-refresh-hint">
           Refresh accepts current delivery sprint endings as commitment dates
@@ -817,15 +849,18 @@ export function Features({
       {!features.length ? (
         <Empty
           title={
-            search ? "No matching features" : "Your next delivery starts here"
+            search || filtered
+              ? "No matching features"
+              : "Your next delivery starts here"
           }
           detail={
-            search
-              ? "Try another title or description."
+            search || filtered
+              ? "Try another search or reset the filters."
               : "Add a feature, estimate its sprints, and select its main assignees."
           }
           action={
-            !search && (
+            !search &&
+            !filtered && (
               <Button variant="secondary" onPress={onAdd}>
                 Add your first feature
               </Button>
@@ -838,22 +873,24 @@ export function Features({
             const r = forecast.features[f.id],
               sprint = state.sprints.find((s) => s.id === f.sprintId),
               status = featureStatus(f, r ?? {}, forecast.asOf ?? today());
-            const occurrences = featureOccurrences(state.features, f);
-            if (occurrences.length > 1)
+            const occurrences = visibleByGroup.get(occurrenceGroupId(f))!;
+            if (featureOccurrences(state.features, f).length > 1)
               return (
                 <article className="feature-item" key={f.id}>
                   <div className="feature-priority">
-                    {String(all.findIndex((v) => v.id === f.id) + 1).padStart(
-                      2,
-                      "0",
-                    )}
+                    {String(
+                      (priorityByGroup.get(occurrenceGroupId(f)) ?? 0) + 1,
+                    ).padStart(2, "0")}
                     <div>
                       <Button
                         variant="ghost"
                         size="sm"
                         isIconOnly
                         aria-label={`Move ${f.title} up`}
-                        isDisabled={busy || all[0].id === f.id}
+                        isDisabled={
+                          busy ||
+                          occurrenceGroupId(all[0]) === occurrenceGroupId(f)
+                        }
                         onPress={() => onMove(f.id, -1)}
                       >
                         <ArrowUp size={13} />
@@ -863,7 +900,11 @@ export function Features({
                         size="sm"
                         isIconOnly
                         aria-label={`Move ${f.title} down`}
-                        isDisabled={busy || all.at(-1)!.id === f.id}
+                        isDisabled={
+                          busy ||
+                          occurrenceGroupId(all.at(-1)!) ===
+                            occurrenceGroupId(f)
+                        }
                         onPress={() => onMove(f.id, 1)}
                       >
                         <ArrowDown size={13} />
@@ -875,7 +916,9 @@ export function Features({
                       <button onClick={() => onEdit(f)}>{f.title}</button>
                     </h3>
                     <p>
-                      {occurrences.length} occurrences ·{" "}
+                      {occurrences.length}{" "}
+                      {occurrences.length === 1 ? "occurrence" : "occurrences"}{" "}
+                      ·{" "}
                       {dayLabel(
                         occurrences.reduce(
                           (sum, occurrence) =>
@@ -964,17 +1007,19 @@ export function Features({
             return (
               <article className="feature-item" key={f.id}>
                 <div className="feature-priority">
-                  {String(all.findIndex((v) => v.id === f.id) + 1).padStart(
-                    2,
-                    "0",
-                  )}
+                  {String(
+                    (priorityByGroup.get(occurrenceGroupId(f)) ?? 0) + 1,
+                  ).padStart(2, "0")}
                   <div>
                     <Button
                       variant="ghost"
                       size="sm"
                       isIconOnly
                       aria-label={`Move ${f.title} up`}
-                      isDisabled={busy || all[0].id === f.id}
+                      isDisabled={
+                        busy ||
+                        occurrenceGroupId(all[0]) === occurrenceGroupId(f)
+                      }
                       onPress={() => onMove(f.id, -1)}
                     >
                       <ArrowUp size={13} />
@@ -984,7 +1029,10 @@ export function Features({
                       size="sm"
                       isIconOnly
                       aria-label={`Move ${f.title} down`}
-                      isDisabled={busy || all.at(-1)!.id === f.id}
+                      isDisabled={
+                        busy ||
+                        occurrenceGroupId(all.at(-1)!) === occurrenceGroupId(f)
+                      }
                       onPress={() => onMove(f.id, 1)}
                     >
                       <ArrowDown size={13} />

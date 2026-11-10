@@ -163,17 +163,18 @@ test("pencil and overview Edit feature retain editing and cancel without changin
   expect(await (await request.get("/api/state")).json()).toEqual(before);
 });
 
-test("View on timeline reveals and focuses the feature despite saved filters", async ({
+test("View on timeline resets shared filters and focuses the selected feature", async ({
   page,
   request,
 }) => {
   const before = await (await request.get("/api/state")).json();
   await page.getByRole("button", { name: "Timeline", exact: true }).click();
-  await page.getByRole("button", { name: /Filter by status/ }).click();
-  await page.getByRole("option", { name: "Done", exact: true }).click();
+  await page.getByRole("button", { name: /Filter by person/ }).click();
+  await page.getByRole("option", { name: "Alex", exact: true }).click();
+  await page.keyboard.press("Escape");
   await expect(
     page.locator('.timeline-bar[data-feature-id="long"]'),
-  ).toHaveCount(0);
+  ).toHaveCount(1);
   await page.getByRole("button", { name: /^Features(?:\s|$)/ }).click();
   await page
     .getByRole("button", { name: "Checkout overview", exact: true })
@@ -188,8 +189,8 @@ test("View on timeline reveals and focuses the feature despite saved filters", a
   await expect(bar).toBeVisible();
   await expect(bar).toBeFocused();
   await expect(
-    page.getByRole("button", { name: /Filter by status/ }),
-  ).toContainText("All statuses");
+    page.getByRole("button", { name: /Filter by person/ }),
+  ).toContainText("All people");
   expect(await (await request.get("/api/state")).json()).toEqual(before);
 });
 

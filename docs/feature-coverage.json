@@ -72,7 +72,9 @@
         "tests/date-status.test.ts",
         "tests/date-status.spec.ts",
         "tests/feature-blocked.test.ts",
-        "tests/feature-blocked.spec.ts"
+        "tests/feature-blocked.spec.ts",
+        "tests/planning-filters.spec.ts",
+        "tests/feature-filters.test.ts"
       ]
     },
     {
@@ -108,7 +110,12 @@
         "Search features",
         "Save feature",
         "Cancel",
-        "Feature blocked"
+        "Feature blocked",
+        "Filter by person",
+        "Filter by sprint",
+        "Filter by status",
+        "Filter by risk",
+        "Reset filters"
       ],
       "tests": [
         "tests/full-qa.spec.ts",
@@ -120,7 +127,9 @@
         "tests/date-status-migration.spec.ts",
         "tests/feature-blocked.test.ts",
         "tests/feature-blocked.spec.ts",
-        "tests/delivery-setup.spec.ts"
+        "tests/delivery-setup.spec.ts",
+        "tests/planning-filters.spec.ts",
+        "tests/feature-filters.test.ts"
       ]
     },
     {

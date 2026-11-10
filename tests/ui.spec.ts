@@ -162,6 +162,7 @@ test("retries an initial database request before onboarding", async ({
   await expect(
     page.getByRole("heading", {
       name: "Timeline",
+      level: 1,
     }),
   ).toBeVisible();
 });
@@ -193,6 +194,7 @@ test("new-app wizard shares a person and saves updated global working hours", as
   await expect(
     page.getByRole("heading", {
       name: "Timeline",
+      level: 1,
     }),
   ).toBeVisible();
   const { state } = await (await request.get("/api/state")).json();

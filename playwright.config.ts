@@ -48,6 +48,7 @@ export default defineConfig({
         "**/stakeholder-mode.spec.ts",
         "**/feature-editor-refinements.spec.ts",
         "**/timeline-refinements.spec.ts",
+        "**/planning-filters.spec.ts",
         "**/feature-leave.spec.ts",
         "**/working-days.spec.ts",
         "**/save-review.spec.ts",

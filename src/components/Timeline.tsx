@@ -6,7 +6,14 @@ import { workCapacityNote } from "../lib/capacity-notes";
 import { DelayExplanation } from "./DelayExplanation";
 import { FeatureLeaveDetails } from "./FeatureLeaveDetails";
 import { featureLeaveDays, featureLeaveSummary } from "../lib/feature-leave";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   addMonths,
   differenceInCalendarDays,
@@ -28,11 +35,14 @@ import { Button, Empty, Pick, ErrorText } from "./ui";
 import { today, type PlannerState, type Feature } from "../lib/model";
 import { dateStatus, featureStatus, statusLabels } from "../lib/date-status";
 import { featureWork, featureAssignees } from "../lib/feature-work";
+import type { TimelinePreferences } from "../lib/view-preferences";
+import { useViewPreferences } from "../lib/use-view-preferences";
 import {
-  readTimelinePreferences,
-  writeTimelinePreferences,
-  type TimelinePreferences,
-} from "../lib/view-preferences";
+  emptyFeatureFilters,
+  hasFeatureFilters,
+  matchesFeatureFilters,
+} from "../lib/feature-filters";
+import { PlanningFilters } from "./PlanningFilters";
 import { calendarEvents } from "../lib/calendar-display";
 import { holidayApplies } from "../lib/availability";
 import { exportTimelinePdf } from "../lib/timeline-print";
@@ -78,25 +88,17 @@ function TimelineView({
   const memberIds = state.members
     .filter((m) => m.appId === appId)
     .map((m) => m.personId);
-  const sprints = state.sprints.filter((s) => s.appId === appId);
-  const [preferences, setPreferences] = useState(() => {
-    const saved = readTimelinePreferences(appId, today(), undefined, {
-      personIds: memberIds,
-      sprintIds: sprints.map((s) => s.id),
-    });
-    return focusFeatureId
-      ? {
-          ...saved,
-          view: "features" as const,
-          zoom: "month" as const,
-          start: forecast.features[focusFeatureId]?.start ?? currentDate,
-          person: "all",
-          sprint: "all",
-          status: "all" as const,
-          risk: "all" as const,
-        }
-      : saved;
-  });
+  const { preferences, setPreferences } = useViewPreferences();
+  useLayoutEffect(() => {
+    if (!focusFeatureId) return;
+    setPreferences((previous) => ({
+      ...previous,
+      ...emptyFeatureFilters(),
+      view: "features",
+      zoom: "month",
+      start: forecast.features[focusFeatureId]?.start ?? currentDate,
+    }));
+  }, [focusFeatureId]);
   const {
     start,
     zoom,
@@ -113,56 +115,15 @@ function TimelineView({
     key: K,
     value: TimelinePreferences[K],
   ) => setPreferences((previous) => ({ ...previous, [key]: value }));
-  useEffect(() => {
-    writeTimelinePreferences(appId, preferences);
-  }, [appId, preferences]);
-  const personExists = person === "all" || memberIds.includes(person);
-  const sprintExists =
-    sprint === "all" ||
-    sprint === "unassigned" ||
-    sprints.some((s) => s.id === sprint);
-  useEffect(() => {
-    if (!personExists || !sprintExists)
-      setPreferences((previous) => ({
-        ...previous,
-        person: personExists ? previous.person : "all",
-        sprint: sprintExists ? previous.sprint : "all",
-      }));
-  }, [personExists, sprintExists]);
   const [expanded, setExpanded] = useState<string[]>([]),
     [dragging, setDragging] = useState("");
   const allFeatures = state.features
     .filter((f) => f.appId === appId)
     .sort((a, b) => a.priority - b.priority);
-  const features = allFeatures.filter(
-    (f) =>
-      (person === "all" || featureAssignees(f).includes(person)) &&
-      (sprint === "all" ||
-        (sprint === "unassigned" ? !f.sprintId : f.sprintId === sprint)) &&
-      (status === "all" ||
-        featureStatus(f, forecast.features[f.id] ?? {}, currentDate) ===
-          status) &&
-      (risk === "all" ||
-        (risk === "at-risk"
-          ? !!forecast.features[f.id]?.commitmentDelayed
-          : risk === "on-track"
-            ? !!(
-                f.committed &&
-                f.commitment &&
-                !forecast.features[f.id]?.commitmentDelayed
-              )
-            : !(f.committed && f.commitment))),
+  const features = allFeatures.filter((feature) =>
+    matchesFeatureFilters(feature, preferences, forecast, currentDate),
   );
-  const filtered =
-    person !== "all" || sprint !== "all" || status !== "all" || risk !== "all";
-  const resetFilters = () =>
-    setPreferences((previous) => ({
-      ...previous,
-      person: "all",
-      sprint: "all",
-      status: "all",
-      risk: "all",
-    }));
+  const filtered = hasFeatureFilters(preferences);
   const hasCalendar =
     state.holidays.some(
       (holiday) =>
@@ -269,7 +230,9 @@ function TimelineView({
             features,
             members: state.members.filter(
               (m) =>
-                m.appId !== appId || person === "all" || m.personId === person,
+                m.appId !== appId ||
+                !person.length ||
+                person.includes(m.personId),
             ),
           },
           appId,
@@ -458,69 +421,18 @@ function TimelineView({
           </Button>
         </div>
       </div>
-      <div className="timeline-filters" aria-label="Timeline display filters">
-        <Pick
-          label="Filter by person"
-          value={person}
-          onChange={(value) => updatePreference("person", value)}
-          options={[
-            { id: "all", label: "All people" },
-            ...state.people
-              .filter((p) => memberIds.includes(p.id))
-              .map((p) => ({ id: p.id, label: p.name })),
-          ]}
-        />
-        <Pick
-          label="Filter by sprint"
-          value={sprint}
-          onChange={(value) => updatePreference("sprint", value)}
-          options={[
-            { id: "all", label: "All sprints" },
-            { id: "unassigned", label: "No assigned sprint" },
-            ...sprints.map((s) => ({ id: s.id, label: `Sprint ${s.number}` })),
-          ]}
-        />
-        <Pick
-          label="Filter by status"
-          value={status}
-          onChange={(value) =>
-            updatePreference("status", value as TimelinePreferences["status"])
-          }
-          options={[
-            { id: "all", label: "All statuses" },
-            ...Object.entries(statusLabels).map(([id, label]) => ({
-              id,
-              label,
-            })),
-          ]}
-        />
-        <Pick
-          label="Filter by risk"
-          value={risk}
-          onChange={(value) =>
-            updatePreference("risk", value as TimelinePreferences["risk"])
-          }
-          options={[
-            { id: "all", label: "All risk" },
-            { id: "at-risk", label: "At risk" },
-            { id: "on-track", label: "On track" },
-            { id: "unaccepted", label: "No accepted date" },
-          ]}
-        />
-        {filtered && (
-          <Button variant="ghost" onPress={resetFilters}>
-            Reset filters
-          </Button>
-        )}
-        <p className="timeline-filter-note">
-          Showing {groupOccurrences(features).length} of{" "}
-          {groupOccurrences(allFeatures).length} features
-          {allFeatures.some((f) => f.occurrenceGroupId)
-            ? ` · ${features.length} occurrences`
-            : ""}{" "}
-          · Filters change this view only. PDF includes all app work.
-        </p>
-      </div>
+      <PlanningFilters
+        state={state}
+        appId={appId}
+        screen="Timeline"
+        count={groupOccurrences(features).length}
+        total={groupOccurrences(allFeatures).length}
+        occurrences={
+          allFeatures.some((feature) => feature.occurrenceGroupId)
+            ? features.length
+            : undefined
+        }
+      />
       {filtered && !features.length && (
         <p className="timeline-filter-empty" role="status">
           No features match these filters.

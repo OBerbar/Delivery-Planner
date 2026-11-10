@@ -102,6 +102,66 @@ export function Pick({
     </Select>
   );
 }
+export function MultiPick({
+  label,
+  value,
+  onChange,
+  options,
+  allLabel,
+}: {
+  label: string;
+  value: string[];
+  onChange: (values: string[]) => void;
+  options: readonly { id: string; label: string }[];
+  allLabel: string;
+}) {
+  return (
+    <Select
+      className="field"
+      aria-label={label}
+      selectionMode="multiple"
+      value={value.length ? value : ["all"]}
+      onChange={(selected) => {
+        const values = Array.isArray(selected)
+          ? selected.map(String)
+          : selected === null
+            ? []
+            : [String(selected)];
+        onChange(
+          value.length && values.includes("all")
+            ? []
+            : values.filter((id) => id !== "all"),
+        );
+      }}
+    >
+      <Label>{label}</Label>
+      <Select.Trigger>
+        <Select.Value>
+          {!value.length
+            ? allLabel
+            : value.length === 1
+              ? options.find((option) => option.id === value[0])?.label
+              : `${value.length} selected`}
+        </Select.Value>
+        <Select.Indicator />
+      </Select.Trigger>
+      <Select.Popover>
+        <ListBox selectionBehavior="toggle">
+          {[{ id: "all", label: allLabel }, ...options].map((option) => (
+            <ListBox.Item
+              key={option.id}
+              id={option.id}
+              textValue={option.label}
+            >
+              {option.label}
+              <ListBox.ItemIndicator />
+            </ListBox.Item>
+          ))}
+        </ListBox>
+      </Select.Popover>
+    </Select>
+  );
+}
 export function Dialog({
   open,
   onClose,

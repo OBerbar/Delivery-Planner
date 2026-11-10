@@ -264,6 +264,7 @@ test("sprint and status filters apply to occurrences and Features keeps one shar
   await seed(page, request);
   await page.getByRole("button", { name: /Filter by sprint/ }).click();
   await page.getByRole("option", { name: "Sprint 2", exact: true }).click();
+  await page.keyboard.press("Escape");
   await expect(bars(page)).toHaveCount(1);
   await expect(bars(page)).toHaveAttribute("data-feature-id", "second");
   await page
@@ -276,6 +277,7 @@ test("sprint and status filters apply to occurrences and Features keeps one shar
   await expect(bars(page).last()).toContainText("Planned");
   await page.getByRole("button", { name: /Filter by status/ }).click();
   await page.getByRole("option", { name: "Done", exact: true }).click();
+  await page.keyboard.press("Escape");
   await expect(bars(page)).toHaveCount(2);
   await page.getByRole("button", { name: /^Features(?:\s|$)/ }).click();
   await expect(
@@ -283,7 +285,7 @@ test("sprint and status filters apply to occurrences and Features keeps one shar
   ).toBeVisible();
   await expect(page.locator(".feature-item")).toHaveCount(1);
   await expect(page.locator(".feature-occurrence-list > article")).toHaveCount(
-    3,
+    2,
   );
 });
 

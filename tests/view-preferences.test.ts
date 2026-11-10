@@ -19,6 +19,46 @@ function memoryStorage(): PreferenceStorage {
 }
 
 describe("local timeline view preferences", () => {
+  it("migrates legacy scalar filters and retains multiple valid selections", () => {
+    const storage = memoryStorage();
+    storage.setItem(
+      timelinePreferencesKey("a"),
+      JSON.stringify({
+        version: 1,
+        person: "p",
+        sprint: "s",
+        status: "blocked",
+        risk: "at-risk",
+      }),
+    );
+    expect(readTimelinePreferences("a", today, storage)).toMatchObject({
+      person: ["p"],
+      sprint: ["s"],
+      status: ["blocked"],
+      risk: ["at-risk"],
+    });
+    storage.setItem(
+      timelinePreferencesKey("a"),
+      JSON.stringify({
+        version: 2,
+        person: ["p", "q", "p", "gone"],
+        sprint: ["s", "unassigned", "missing"],
+        status: ["todo", "blocked", "unknown"],
+        risk: ["at-risk", "unaccepted"],
+      }),
+    );
+    expect(
+      readTimelinePreferences("a", today, storage, {
+        personIds: ["p", "q"],
+        sprintIds: ["s"],
+      }),
+    ).toMatchObject({
+      person: ["p", "q"],
+      sprint: ["s", "unassigned"],
+      status: ["todo", "blocked"],
+      risk: ["at-risk", "unaccepted"],
+    });
+  });
   it("defaults to two months from today, features, month zoom, expanded absences and all work", () => {
     expect(readTimelinePreferences("a", today, memoryStorage())).toEqual({
       view: "features",
@@ -26,10 +66,10 @@ describe("local timeline view preferences", () => {
       months: "2",
       start: today,
       availabilityCollapsed: false,
-      person: "all",
-      sprint: "all",
-      status: "all",
-      risk: "all",
+      person: [],
+      sprint: [],
+      status: [],
+      risk: [],
     });
   });
 
@@ -42,10 +82,10 @@ describe("local timeline view preferences", () => {
       months: "6" as const,
       start: "2030-02-02",
       availabilityCollapsed: true,
-      person: "q",
-      sprint: "s",
-      status: "doing" as const,
-      risk: "at-risk" as const,
+      person: ["q"],
+      sprint: ["s"],
+      status: ["doing"],
+      risk: ["at-risk"],
     };
     const before = structuredClone(preference);
     expect(writeTimelinePreferences("a", preference, storage)).toBe(true);
@@ -69,7 +109,7 @@ describe("local timeline view preferences", () => {
     );
     expect(readTimelinePreferences("a", today, storage)).toEqual({
       ...defaultTimelinePreferences(today),
-      status: "blocked",
+      status: ["blocked"],
       view: "people",
       zoom: "week",
     });
@@ -119,7 +159,7 @@ describe("local timeline view preferences", () => {
       "null",
       "[]",
       '\"people\"',
-      '{"version":2,"view":"people"}',
+      '{"version":3,"view":"people"}',
     ]) {
       storage.setItem(timelinePreferencesKey("a"), raw);
       expect(readTimelinePreferences("a", today, storage)).toEqual(
@@ -134,8 +174,8 @@ describe("local timeline view preferences", () => {
       "a",
       {
         ...defaultTimelinePreferences(today),
-        person: "removed",
-        sprint: "other-app",
+        person: ["removed"],
+        sprint: ["other-app"],
       },
       storage,
     );
@@ -149,8 +189,8 @@ describe("local timeline view preferences", () => {
       "a",
       {
         ...defaultTimelinePreferences(today),
-        person: "p",
-        sprint: "unassigned",
+        person: ["p"],
+        sprint: ["unassigned"],
       },
       storage,
     );
@@ -159,7 +199,7 @@ describe("local timeline view preferences", () => {
         personIds: ["p"],
         sprintIds: ["s"],
       }).sprint,
-    ).toBe("unassigned");
+    ).toEqual(["unassigned"]);
   });
 
   it("keeps the view usable when browser storage access is denied or unavailable", () => {

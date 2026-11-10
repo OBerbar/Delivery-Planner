@@ -40,6 +40,7 @@ test.afterEach(async ({ page }) => expect(issues.get(page)).toEqual([]));
 async function select(page: Page, label: string, option: string) {
   await page.getByRole("button", { name: new RegExp(label) }).click();
   await page.getByRole("option", { name: option, exact: true }).click();
+  if (label.startsWith("Filter by")) await page.keyboard.press("Escape");
 }
 
 test("view, window, collapse and all display filters survive reload without saving planning data", async ({

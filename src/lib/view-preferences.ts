@@ -1,15 +1,15 @@
 import { isSampleWorkspace } from "./sample-workspace";
+import {
+  emptyFeatureFilters,
+  type FeatureFilterSelections,
+} from "./feature-filters";
 
-export interface TimelinePreferences {
+export interface TimelinePreferences extends FeatureFilterSelections {
   view: "features" | "people";
   zoom: "day" | "week" | "month";
   months: "1" | "2" | "3" | "4" | "5" | "6";
   start: string;
   availabilityCollapsed: boolean;
-  person: string;
-  sprint: string;
-  status: "all" | "todo" | "doing" | "blocked" | "done";
-  risk: "all" | "at-risk" | "on-track" | "unaccepted";
 }
 export interface PreferenceStorage {
   getItem: (key: string) => string | null;
@@ -29,10 +29,7 @@ export function defaultTimelinePreferences(today: string): TimelinePreferences {
     months: "2",
     start: today,
     availabilityCollapsed: false,
-    person: "all",
-    sprint: "all",
-    status: "all",
-    risk: "all",
+    ...emptyFeatureFilters(),
   };
 }
 export function readTimelinePreferences(
@@ -51,25 +48,28 @@ export function readTimelinePreferences(
     if (!saved || typeof saved !== "object" || Array.isArray(saved))
       return defaults;
     const value = saved as Record<string, unknown>;
-    if (value.version !== 1) return defaults;
+    if (value.version !== 1 && value.version !== 2) return defaults;
     const select = <T extends string>(
       field: string,
       choices: readonly T[],
       fallback: T,
     ): T =>
       choices.includes(value[field] as T) ? (value[field] as T) : fallback;
-    const identifier = (
-      field: string,
-      ids?: string[],
-      extra: string[] = [],
-    ) => {
-      const id = value[field];
-      return typeof id === "string" &&
-        id.length > 0 &&
-        id.length <= 200 &&
-        (!ids || id === "all" || extra.includes(id) || ids.includes(id))
-        ? id
-        : "all";
+    const selection = (field: string, ids?: string[], extra: string[] = []) => {
+      const raw = value[field];
+      const values = Array.isArray(raw)
+        ? raw
+        : typeof raw === "string"
+          ? [raw]
+          : [];
+      if (values.includes("all")) return [];
+      return [...new Set(values)].filter(
+        (id): id is string =>
+          typeof id === "string" &&
+          id.length > 0 &&
+          id.length <= 200 &&
+          (!ids || extra.includes(id) || ids.includes(id)),
+      );
     };
     return {
       view: select("view", ["features", "people"], defaults.view),
@@ -80,18 +80,10 @@ export function readTimelinePreferences(
         typeof value.availabilityCollapsed === "boolean"
           ? value.availabilityCollapsed
           : false,
-      person: identifier("person", records?.personIds),
-      sprint: identifier("sprint", records?.sprintIds, ["unassigned"]),
-      status: select(
-        "status",
-        ["all", "todo", "doing", "blocked", "done"],
-        defaults.status,
-      ),
-      risk: select(
-        "risk",
-        ["all", "at-risk", "on-track", "unaccepted"],
-        defaults.risk,
-      ),
+      person: selection("person", records?.personIds),
+      sprint: selection("sprint", records?.sprintIds, ["unassigned"]),
+      status: selection("status", ["all", "todo", "doing", "blocked", "done"]),
+      risk: selection("risk", ["all", "at-risk", "on-track", "unaccepted"]),
     };
   } catch {
     return defaults;
@@ -107,7 +99,7 @@ export function writeTimelinePreferences(
     if (!target) return false;
     target.setItem(
       timelinePreferencesKey(appId),
-      JSON.stringify({ ...preferences, version: 1 }),
+      JSON.stringify({ ...preferences, version: 2 }),
     );
     return true;
   } catch {

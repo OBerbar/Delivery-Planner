@@ -141,6 +141,7 @@ test("a saved blocked timeline filter remains selected and automatic filters rem
     page.getByRole("option", { name: "Blocked", exact: true }),
   ).toHaveCount(1);
   await page.getByRole("option", { name: "Planned", exact: true }).click();
+  await page.keyboard.press("Escape");
   await expect(
     page.locator(".timeline-bar", { hasText: "Automatic delivery" }),
   ).toBeVisible();
@@ -281,6 +282,7 @@ for (const warning of ["target", "commitment"] as const) {
       await page.evaluate(() => window.dispatchEvent(new Event("focus")));
       await page.getByRole("button", { name: /Filter by status/ }).click();
       await page.getByRole("option", { name: status, exact: true }).click();
+      await page.keyboard.press("Escape");
       await expect(feature).toContainText(status);
       if (date === "2030-01-07")
         await expect(feature).toHaveAttribute("aria-label", /Forecast exceeds/);

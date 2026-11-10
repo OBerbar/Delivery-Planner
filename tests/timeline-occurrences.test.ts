@@ -68,3 +68,34 @@ it("groups feature PDF bars while preserving each occurrence booking", () => {
   expect(pages[0].rows).toHaveLength(1);
   expect(pages[0].rows[0].bars).toHaveLength(3);
 });
+
+it("expanded feature work includes every selected person and excludes other owners", () => {
+  const state = occurrencesFixture();
+  const feature = state.features[0];
+  feature.assigneeIds = ["p", "q"];
+  feature.assigneeEstimates = [
+    { personId: "p", unit: "days", value: 2 },
+    { personId: "q", unit: "days", value: 1 },
+  ];
+  feature.estimateEffort = [
+    { personId: "p", hours: 16 },
+    { personId: "q", hours: 8 },
+  ];
+  const forecast = schedule(state, "2030-01-06");
+  const rows = (people: string[]) =>
+    featureTimelineRows(
+      state,
+      [feature],
+      forecast,
+      "2030-01-06",
+      "2030-03-06",
+      20,
+      [feature.id],
+      people,
+    )
+      .filter((row) => row.child)
+      .map((row) => row.personId);
+  expect(rows(["p", "q"])).toEqual(["p", "q"]);
+  expect(rows(["q"])).toEqual(["q"]);
+  expect(rows([])).toEqual(["p", "q"]);
+});
