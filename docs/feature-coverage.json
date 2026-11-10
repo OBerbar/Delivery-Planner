@@ -469,14 +469,17 @@
     },
     {
       "id": "what-if",
-      "title": "Temporary What-if workspace",
+      "title": "Temporary What-if workspace with meaningful, explained feature comparisons",
       "manualAnchor": "what-if",
       "fields": [
         "What-if planning",
         "Compare with saved plan",
         "Apply experiment",
         "Discard experiment",
-        "Undo last change"
+        "Undo last change",
+        "What changed",
+        "Delivery unchanged",
+        "Feature comparison details"
       ],
       "tests": ["tests/what-if.test.ts", "tests/what-if.spec.ts"]
     },

@@ -263,6 +263,22 @@ for (const [width, height] of [
     await banner.locator("summary").focus();
     await page.keyboard.press("Space");
     await expect(banner).toContainText("7 calendar days later");
+    const comparison = banner.getByRole("region", {
+      name: "Feature comparison details",
+      exact: true,
+    });
+    await comparison.focus();
+    await expect(comparison).toBeFocused();
+    if (width === 744) {
+      await page.keyboard.press("End");
+      await expect
+        .poll(() => comparison.evaluate((element) => element.scrollTop))
+        .toBeGreaterThan(0);
+      await page.keyboard.press("Home");
+      await expect
+        .poll(() => comparison.evaluate((element) => element.scrollTop))
+        .toBe(0);
+    }
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth - innerWidth,
@@ -323,5 +339,243 @@ test("shared-person leave changes both apps inside one temporary workspace", asy
   await page
     .getByRole("button", { name: "Discard experiment", exact: true })
     .click();
+  expect(await (await request.get("/api/state")).json()).toEqual(before);
+});
+
+for (const [name, width, height] of [
+  ["desktop", 1440, 1000],
+  ["iPad portrait", 744, 1133],
+  ["iPad landscape", 1133, 744],
+] as const) {
+  test(`${name}: comparison ignores insertion renumbering and explains content edits with unchanged dates @a11y`, async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width, height });
+    const before = await (await request.get("/api/state")).json();
+    await start(page);
+    await page
+      .getByRole("button", { name: "Add feature", exact: true })
+      .click();
+    await page
+      .getByLabel("Feature title", { exact: true })
+      .fill("Future design work");
+    await page.getByLabel("Main assignee: Sam", { exact: true }).check();
+    await page.getByRole("button", { name: /Estimate unit/ }).click();
+    await page
+      .getByRole("option", { name: "Working days", exact: true })
+      .click();
+    await page.getByLabel("Working days estimation", { exact: true }).fill("1");
+    await page
+      .getByRole("dialog")
+      .locator("summary", { hasText: "Scheduling options" })
+      .click();
+    await page
+      .getByLabel("Start no earlier than", { exact: true })
+      .fill("2030-06-03");
+    await page
+      .getByRole("button", { name: "Save feature", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const banner = page.getByRole("region", {
+      name: "What-if experiment",
+      exact: true,
+    });
+    const summary = banner.locator("summary");
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await expect(banner.locator(".experiment-changes article")).toHaveCount(1);
+    await expect(banner.locator(".experiment-changes")).toContainText(
+      "Future design work",
+    );
+    await expect(banner.locator(".experiment-changes")).not.toContainText(
+      "Five sprint delivery",
+    );
+    await expect(banner.locator(".experiment-changes")).not.toContainText(
+      "Mixed person estimates",
+    );
+    await expect(summary).toContainText("1 feature change");
+    await expect(banner).toContainText("Sam: 3 working days → 4 working days");
+    expect(await (await request.get("/api/state")).json()).toEqual(before);
+    await page.getByRole("button", { name: /^Features(?:\s|$)/ }).click();
+    await page
+      .getByRole("button", { name: "Edit Five sprint delivery", exact: true })
+      .click();
+    await page
+      .getByLabel("Description", { exact: true })
+      .fill("Revised release notes");
+    await page
+      .getByRole("button", { name: "Save feature", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    if ((await banner.locator("details").getAttribute("open")) === null)
+      await summary.click();
+    const edited = banner
+      .locator(".experiment-changes article")
+      .filter({ hasText: "Five sprint delivery" });
+    await expect(banner.locator(".experiment-changes article")).toHaveCount(2);
+    await expect(
+      edited.getByRole("list", { name: "What changed", exact: true }),
+    ).toHaveText("Description changed");
+    await expect(edited).toContainText("Delivery unchanged: Mar 15, 2030");
+    await expect(edited).toContainText(
+      "Allocated: 50 working days (unchanged)",
+    );
+    await expect(edited).not.toContainText("Mar 15, 2030 → Mar 15, 2030");
+    await expect(edited).not.toContainText("50 working days → 50 working days");
+    expect(
+      (
+        await new AxeBuilder({ page })
+          .include('[aria-label="What-if experiment"]')
+          .analyze()
+      ).violations,
+    ).toEqual([]);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await banner.scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: `test-results/meaningful-comparison-${width}x${height}.png`,
+      fullPage: true,
+    });
+    await summary.focus();
+    await page.keyboard.press("Space");
+    await expect(edited).toBeHidden();
+    await page.keyboard.press("Space");
+    await expect(edited).toBeVisible();
+    await page
+      .getByRole("button", { name: "Undo last change", exact: true })
+      .click();
+    await expect(banner.locator(".experiment-changes article")).toHaveCount(1);
+    await page
+      .getByRole("button", { name: "Undo last change", exact: true })
+      .click();
+    await expect(banner.locator(".experiment-changes article")).toHaveCount(0);
+    await expect(
+      banner.getByRole("button", { name: "Apply experiment", exact: true }),
+    ).toBeDisabled();
+    await banner
+      .getByRole("button", { name: "Discard experiment", exact: true })
+      .click();
+    await expect(banner).toHaveCount(0);
+    expect(await (await request.get("/api/state")).json()).toEqual(before);
+  });
+}
+
+test("comparison shows a moved start when forecast delivery is unchanged", async ({
+  page,
+  request,
+}) => {
+  const state = maintenanceFixture();
+  state.features = [
+    {
+      ...state.features[0],
+      committed: false,
+      commitment: undefined,
+      sprintId: undefined,
+      sprintEstimate: undefined,
+      assigneeEstimates: [{ personId: "p", unit: "days", value: 1.5 }],
+      estimateEffort: [{ personId: "p", hours: 12 }],
+    },
+  ];
+  state.leaves = [
+    {
+      id: "half-one",
+      personId: "p",
+      start: "2030-01-07",
+      end: "2030-01-07",
+      hours: 4,
+      note: "Half day",
+    },
+    {
+      id: "half-two",
+      personId: "p",
+      start: "2030-01-08",
+      end: "2030-01-08",
+      hours: 4,
+      note: "Half day",
+    },
+  ];
+  const { revision } = await (await request.get("/api/state")).json();
+  expect(
+    (await request.put("/api/state", { data: { state, revision } })).ok(),
+  ).toBe(true);
+  await page.reload();
+  await start(page);
+  await page.getByRole("button", { name: /^Features(?:\s|$)/ }).click();
+  await page
+    .getByRole("button", { name: "Edit Five sprint delivery", exact: true })
+    .click();
+  await page
+    .getByRole("dialog")
+    .locator("summary", { hasText: "Scheduling options" })
+    .click();
+  await page
+    .getByLabel("Start no earlier than", { exact: true })
+    .fill("2030-01-08");
+  await page.getByRole("button", { name: "Save feature", exact: true }).click();
+  const banner = page.getByRole("region", {
+    name: "What-if experiment",
+    exact: true,
+  });
+  await banner.locator("summary").click();
+  await expect(banner).toContainText("Delivery unchanged: Jan 9, 2030");
+  await expect(banner).toContainText("Start: Jan 7, 2030 → Jan 8, 2030");
+  await expect(banner).toContainText("Scheduled start changed");
+});
+
+test("small real allocation changes do not render identical rounded arrows", async ({
+  page,
+  request,
+}) => {
+  const state = maintenanceFixture();
+  state.people[0].dailyHours = 15.75;
+  state.features = [
+    {
+      ...state.features[0],
+      committed: false,
+      commitment: undefined,
+      tasks: [
+        {
+          id: "quarter-hour",
+          title: "Quick review",
+          personId: "p",
+          scope: "Backend",
+          hours: 0.25,
+          status: "todo",
+          dependsOn: [],
+        },
+      ],
+    },
+  ];
+  const { revision } = await (await request.get("/api/state")).json();
+  expect(
+    (await request.put("/api/state", { data: { state, revision } })).ok(),
+  ).toBe(true);
+  await page.reload();
+  const before = await (await request.get("/api/state")).json();
+  await start(page);
+  await page.getByRole("button", { name: /^Team & leave/ }).click();
+  await page.getByRole("button", { name: "Edit Alex", exact: true }).click();
+  await page.getByLabel("Hours per day", { exact: true }).fill("16");
+  await page.getByRole("button", { name: "Save person", exact: true }).click();
+  const banner = page.getByRole("region", {
+    name: "What-if experiment",
+    exact: true,
+  });
+  await banner.locator("summary").click();
+  await expect(banner.locator(".experiment-changes article")).toHaveCount(1);
+  await expect(banner).not.toContainText(
+    "0.016 working day → 0.016 working day",
+  );
+  await expect(banner.locator(".experiment-changes article")).toContainText(
+    "Allocated: 0.016 working day (small decrease; below displayed precision)",
+  );
+  await expect(banner).toContainText(
+    "Alex: 0.016 working day (small decrease; below displayed precision)",
+  );
+  await expect(banner).toContainText("Allocated working days changed");
   expect(await (await request.get("/api/state")).json()).toEqual(before);
 });
