@@ -244,6 +244,23 @@ for (const [name, width, height] of [
     await expect(dialog).toContainText(
       "Alex and Sam determine delivery together",
     );
+    const constraints = dialog.getByRole("region", {
+      name: "Forecast constraints",
+      exact: true,
+    });
+    await expect(
+      constraints.getByText("Sets delivery date", { exact: true }),
+    ).toHaveCount(2);
+    for (const person of ["Alex", "Sam"]) {
+      await expect(
+        constraints
+          .getByRole("region", {
+            name: `${person} forecast constraints`,
+            exact: true,
+          })
+          .locator(":scope > details"),
+      ).toHaveAttribute("open", "");
+    }
     expect(
       (await new AxeBuilder({ page }).include('[role="dialog"]').analyze())
         .violations,
@@ -331,6 +348,16 @@ test("unscheduled work has warnings and no invented finish or delivery determine
   await expect(dialog).toContainText("Dependency cycle");
   await expect(dialog).toContainText("Delivery is not fully scheduled");
   await expect(dialog).not.toContainText("Alex determines delivery");
+  const constraints = dialog.getByRole("region", {
+    name: "Forecast constraints",
+    exact: true,
+  });
+  await expect(
+    constraints.getByText("Prevents a complete forecast", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    constraints.getByText("Sets delivery date", { exact: true }),
+  ).toHaveCount(0);
   await expect(
     dialog.getByRole("figure", {
       name: "Person delivery timeline",
@@ -434,4 +461,224 @@ test("whole-team summary preserves equal saved estimates when allocations produc
   await expect(sam).toContainText("50% allocation");
   await expect(sam).toContainText("Saved estimate5 working days");
   await expect(sam).toContainText("Estimated effort2.5 working days");
+});
+
+for (const [name, width, height] of [
+  ["desktop", 1440, 1000],
+  ["iPad portrait", 744, 1133],
+  ["iPad landscape", 1133, 744],
+  ["phone", 390, 844],
+] as const) {
+  test(`${name}: compact forecast prioritizes delivery and keeps weekends in read-only details @a11y`, async ({
+    page,
+    request,
+  }) => {
+    const issues = observeBrowser(page);
+    await page.setViewportSize({ width, height });
+    const state = overviewFixture();
+    state.features[1].assigneeEstimates![1].value = 6;
+    state.features[1].estimateEffort![1].hours = 48;
+    state.holidays = [
+      {
+        id: "winter",
+        appId: "a",
+        date: "2030-01-09",
+        name: "Winter break",
+        personIds: ["q"],
+      },
+    ];
+    const { revision } = await (await request.get("/api/state")).json();
+    expect(
+      (await request.put("/api/state", { data: { state, revision } })).ok(),
+    ).toBe(true);
+    await page.reload();
+    await page.getByRole("button", { name: /^Features(?:\s|$)/ }).click();
+    const before = await (await request.get("/api/state")).json();
+    await page
+      .getByRole("button", { name: "Checkout overview", exact: true })
+      .click();
+    const constraints = page.getByRole("region", {
+      name: "Forecast constraints",
+      exact: true,
+    });
+    await expect(
+      constraints.getByText("Sam sets delivery on Jan 16, 2030.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    const people = constraints.locator(".forecast-person");
+    await expect(people.first()).toHaveAttribute(
+      "aria-label",
+      "Sam forecast constraints",
+    );
+    const sam = constraints.getByRole("region", {
+      name: "Sam forecast constraints",
+      exact: true,
+    });
+    await expect(
+      sam.getByText("Sets delivery date", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      sam.getByText("Leave: Appointment", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      sam.getByText("Holiday: Winter break", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      constraints.getByText("Ignore leave: Off", { exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      constraints.getByText("Keep other delivery dates: Off", { exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      constraints.getByText("Competing work", { exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      constraints.getByText("Calendar constraints", { exact: true }),
+    ).toHaveCount(0);
+    await expect(constraints.getByText(/Start restriction:/)).toHaveCount(0);
+    await expect(sam.getByText("Weekend", { exact: true })).toBeHidden();
+    await expect(
+      sam.getByText("App planning starts", { exact: true }),
+    ).toBeHidden();
+    const details = sam.locator("summary", {
+      hasText: "View scheduling details",
+    });
+    await details.focus();
+    await page.keyboard.press("Enter");
+    await expect(sam.getByText("Weekend", { exact: true })).toBeVisible();
+    await expect(
+      sam.getByText("2 weekend days", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      sam.getByText("App planning starts", { exact: true }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: `test-results/forecast-details-${width}x${height}.png`,
+    });
+    await details.focus();
+    await page.keyboard.press("Space");
+    await expect(sam.getByText("Weekend", { exact: true })).toBeHidden();
+    const alex = constraints.getByRole("region", {
+      name: "Alex forecast constraints",
+      exact: true,
+    });
+    await expect(alex.getByText("Urgent fix", { exact: true })).toBeHidden();
+    await alex.locator(":scope > details > summary").click();
+    await expect(alex.getByText("Urgent fix", { exact: true })).toBeVisible();
+    await expect(alex.getByText(/1 working day booked/).first()).toBeVisible();
+    await alex
+      .locator("summary", { hasText: "View scheduling details" })
+      .click();
+    await expect(
+      alex.getByText("Capacity unavailable", { exact: true }),
+    ).toBeVisible();
+    expect(
+      (await new AxeBuilder({ page }).include('[role="dialog"]').analyze())
+        .violations,
+    ).toEqual([]);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await sam.locator(":scope > details > summary").click();
+    await expect(
+      sam.getByText("Leave: Appointment", { exact: true }),
+    ).toBeHidden();
+    await sam.locator(":scope > details > summary").click();
+    await constraints.scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: `test-results/forecast-summary-${width}x${height}.png`,
+    });
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Checkout overview", exact: true }),
+    ).toBeFocused();
+    expect(await (await request.get("/api/state")).json()).toEqual(before);
+    expect(issues).toEqual([]);
+  });
+}
+
+test("forecast summary keeps controlling dependencies and explicit start restrictions visible", async ({
+  page,
+  request,
+}) => {
+  const state = overviewFixture();
+  state.features[0].tasks = [
+    {
+      id: "fix-task",
+      title: "Repair payments",
+      personId: "p",
+      scope: "Backend",
+      hours: 8,
+      status: "todo",
+      dependsOn: [],
+    },
+  ];
+  state.features[1].tasks = [
+    {
+      id: "checkout-task",
+      title: "Test checkout",
+      personId: "q",
+      scope: "Design",
+      hours: 8,
+      status: "todo",
+      dependsOn: ["fix-task"],
+    },
+  ];
+  const { revision } = await (await request.get("/api/state")).json();
+  expect(
+    (await request.put("/api/state", { data: { state, revision } })).ok(),
+  ).toBe(true);
+  await page.reload();
+  await page.getByRole("button", { name: /^Features(?:\s|$)/ }).click();
+  await page
+    .getByRole("button", { name: "Checkout overview", exact: true })
+    .click();
+  let constraints = page.getByRole("region", {
+    name: "Forecast constraints",
+    exact: true,
+  });
+  await expect(
+    constraints.getByText("Waiting for Urgent fix", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    constraints.getByText("Repair payments · Alex", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    constraints.getByText("Can follow from Jan 8, 2030", { exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  state.features[1].notBefore = "2030-01-10";
+  const saved = await (await request.get("/api/state")).json();
+  expect(
+    (
+      await request.put("/api/state", {
+        data: { state, revision: saved.revision },
+      })
+    ).ok(),
+  ).toBe(true);
+  await page.reload();
+  await page.getByRole("button", { name: /^Features(?:\s|$)/ }).click();
+  await page
+    .getByRole("button", { name: "Checkout overview", exact: true })
+    .click();
+  constraints = page.getByRole("region", {
+    name: "Forecast constraints",
+    exact: true,
+  });
+  await expect(
+    constraints.getByText("Start restriction: Jan 10, 2030", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    constraints.getByText("Waiting for Urgent fix", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    constraints.getByText(
+      "No competing feature bookings reduced this person’s scheduling capacity.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
 });

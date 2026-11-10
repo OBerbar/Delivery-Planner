@@ -551,7 +551,7 @@
     },
     {
       "id": "feature-overview",
-      "title": "Read-only feature forecast, effort and constraints overview",
+      "title": "Read-only feature overview with prioritized person forecast summaries and expandable scheduling evidence",
       "manualAnchor": "feature-overview",
       "fields": [
         "Feature overview",
@@ -571,7 +571,10 @@
         "Close overview",
         "Edit feature",
         "View on timeline",
-        "Saved estimate"
+        "Saved estimate",
+        "View scheduling details",
+        "Sets delivery date",
+        "Prevents a complete forecast"
       ],
       "tests": [
         "tests/feature-overview.test.ts",

@@ -153,6 +153,77 @@
   padding: 5px 8px;
   font-size: 12px;
 }
+.forecast-delivery-summary {
+  font-weight: 600;
+}
+.forecast-person {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.forecast-person > details > summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  min-height: 48px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.forecast-person > details > summary::before {
+  content: "+";
+  font-weight: 600;
+}
+.forecast-person > details[open] > summary::before {
+  content: "−";
+}
+.forecast-person-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+.forecast-person .forecast-delivery-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+.forecast-person-body {
+  padding: 0 14px 14px;
+  font-size: 13px;
+}
+.forecast-highlights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.forecast-highlights li {
+  margin: 12px 0;
+}
+.forecast-highlights span,
+.forecast-evidence-item span {
+  display: block;
+  font-size: 12px;
+}
+.forecast-evidence > summary {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+.forecast-person summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.forecast-evidence-body {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.forecast-evidence-item {
+  margin: 12px 0;
+}
 .feature-overview .overview-actions {
   display: flex;
   flex-wrap: wrap;

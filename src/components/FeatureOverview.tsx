@@ -7,7 +7,7 @@ import { displayDate, type Schedule } from "../lib/planning";
 import { dayLabel } from "../lib/working-days";
 import { featureStatus, statusLabels } from "../lib/date-status";
 import { usePlanningMode } from "../lib/planning-mode";
-import { ForecastPeople } from "./DelayExplanation";
+import { ForecastConstraints } from "./ForecastConstraints";
 import { CommitmentDates } from "./Features";
 import { Button, Dialog } from "./ui";
 import "./feature-editor.css";
@@ -245,39 +245,11 @@ export function FeatureOverview({
             </p>
           )}
         </figure>
-        <section
-          className="overview-constraints delay-explanation-body"
-          aria-label="Forecast constraints"
-        >
-          <h3>What shapes this forecast?</h3>
-          <div className="overview-assumptions">
-            <span>Ignore leave: {feature.ignoreLeave ? "On" : "Off"}</span>
-            <span>
-              Keep other delivery dates:{" "}
-              {feature.doesntAffectOtherWork ? "On" : "Off"}
-            </span>
-          </div>
-          {feature.ignoreLeave && (
-            <p className="helper">
-              Personal leave is excluded for this feature. Holidays, weekends,
-              shared bookings and dependencies still apply.
-            </p>
-          )}
-          <p className="helper">
-            These are current scheduling constraints, not a history of changes.
-            Booked and unavailable working days can overlap; they cannot be
-            added into a calendar-day delay.
-          </p>
-          {data.constraints.length ? (
-            <ForecastPeople people={data.constraints} />
-          ) : (
-            <p className="helper">
-              {result?.done
-                ? "This feature is complete. Historical causes are not reconstructed from today’s calendars."
-                : "No unfinished work has scheduling constraints to show."}
-            </p>
-          )}
-        </section>
+        <ForecastConstraints
+          feature={feature}
+          data={data}
+          completed={result?.done}
+        />
         <div className="dialog-actions overview-actions">
           <Button variant="ghost" onPress={onClose}>
             Close overview
