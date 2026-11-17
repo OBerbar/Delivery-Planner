@@ -245,6 +245,8 @@ Choose **Move to backlog** on a timeline feature, or change **Placement** in its
 
 Moving retains the feature's description, completion conditions, reference, assignees, original estimates and saved effort, tasks, dependencies, priority, sprint assignment, start/target dates, planning anchor, blocked flag and accepted delivery dates. Finalized plan text and saved drafts stay unchanged. **Backlog** is independent of **Assigned sprint**: a timeline feature with **No sprint assigned** still schedules normally. An accepted date retained in backlog is historical context, without an active delivery-risk forecast.
 
+Priority arrows in Backlog reorder only the parked features. Active priorities and forecasts stay unchanged, including other apps that share the same people.
+
 Choose **Move to timeline**, or select **Timeline** in the editor and save, to schedule the feature again using its retained inputs and calendars. The original planning anchor is retained; old work can therefore appear in history. Edit its scheduling options deliberately if a new start is needed. Dependent timeline tasks keep their dependency links and show **Waiting for a dependency in backlog** until their prerequisite returns to the timeline; backlog never invents a completion date, even for saved completed tasks.
 
 Placement applies to the whole feature: every repeated occurrence moves together and keeps its own data. New occurrences inherit the feature's placement. Backlog items remain editable through their pencil or overview's **Edit feature**. Their overview explains that they do not reserve capacity; **View on timeline** is disabled until scheduled. **Undo last change**, What-if Apply/Discard, full backups and restore include placement and follow their normal rules. Legacy workspaces and backups open with all original features on the timeline.
@@ -644,3 +646,4 @@ Apply and Discard return to normal planning. Normal Undo can reverse a successfu
 - **2026-11-10:** Added multi-selection to all four Timeline filters and the same synchronized filters on Features. Categories combine with AND, selections within each category with OR, and All removes a category restriction. Search combines with filters; matching occurrences remain grouped. Per-app browser preferences migrate old single selections, and Reset filters retains search/view settings. Scheduling, saved data and export scope are preserved.
 
 - 2026-11-17: Added feature backlog placement, creation and move actions, preserved occurrence data and accepted dates, capacity release, dependency waiting, and backlog exclusions from timeline and sprint planning.
+- 2026-11-17: Isolated backlog priority changes so reordering parked work preserves active priorities and forecasts across shared-person apps.

@@ -4,6 +4,7 @@ import { maintenanceFixture, fixedToday } from "../scripts/maintenance-fixture";
 import { observeBrowser } from "../scripts/browser-observability";
 import { confirmSchedulingReview } from "./helpers/ui-workflows";
 import { repeatedOccurrencesFixture } from "./occurrences-fixture";
+import { schedule } from "../src/lib/planning";
 
 for (const [name, width, height] of [
   ["desktop", 1440, 1000],
@@ -343,4 +344,73 @@ test("occurrence placement and drafts survive switching runs in What-if Apply an
     })),
   );
   expect(after.state.sprints).toEqual(state.sprints);
+});
+
+test("reordering backlog preserves active priorities and forecasts across shared-person apps", async ({
+  page,
+  request,
+}) => {
+  await page.clock.install({ time: new Date(`${fixedToday}T12:00:00Z`) });
+  const state = maintenanceFixture();
+  state.apps.push({ ...state.apps[0], id: "b", name: "Another app" });
+  state.members.push({ ...state.members[0], id: "member-b", appId: "b" });
+  const active = {
+    ...state.features[0],
+    title: "Active A",
+    priority: 1,
+    estimateEffort: [{ personId: "p", hours: 8 }],
+  };
+  state.features = [
+    {
+      ...structuredClone(active),
+      id: "parked-1",
+      title: "Parked 1",
+      priority: 0,
+      placement: "backlog",
+    },
+    active,
+    {
+      ...structuredClone(active),
+      id: "parked-2",
+      title: "Parked 2",
+      priority: 2,
+      placement: "backlog",
+    },
+    {
+      ...structuredClone(active),
+      id: "active-b",
+      title: "Active B",
+      appId: "b",
+      sprintId: undefined,
+    },
+  ];
+  const { revision } = await (await request.get("/api/state")).json();
+  expect(
+    (await request.put("/api/state", { data: { state, revision } })).ok(),
+  ).toBe(true);
+  await page.goto("/");
+  await page.getByRole("button", { name: /^Features(?:\s|$)/ }).click();
+  await page
+    .getByRole("button", { name: "Backlog features", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Move Parked 2 up", exact: true })
+    .click();
+  await expect(page.locator(".feature-item h3").first()).toHaveText("Parked 2");
+  await expect(
+    page.getByRole("dialog", {
+      name: "Review scheduling changes",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await expect(page.getByRole("status")).toContainText("Saved");
+  const after = (await (await request.get("/api/state")).json()).state;
+  const beforeForecast = schedule(state, fixedToday),
+    afterForecast = schedule(after, fixedToday);
+  for (const id of ["long", "active-b"]) {
+    expect(
+      after.features.find((feature: { id: string }) => feature.id === id),
+    ).toEqual(state.features.find((feature) => feature.id === id));
+    expect(afterForecast.features[id]).toEqual(beforeForecast.features[id]);
+  }
 });

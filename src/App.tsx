@@ -233,8 +233,13 @@ export default function App({
     }
   };
   const reorder = (from: string, to: string) => {
+    const source = features.find((feature) => feature.id === from);
+    const reorderable =
+      source?.placement === "backlog"
+        ? features.filter((feature) => feature.placement === "backlog")
+        : features;
     const groups = groupOccurrences(
-      features.slice().sort((a, b) => a.priority - b.priority),
+      reorderable.slice().sort((a, b) => a.priority - b.priority),
     );
     const a = groups.findIndex((group) => group.some((f) => f.id === from));
     const b = groups.findIndex((group) => group.some((f) => f.id === to));
