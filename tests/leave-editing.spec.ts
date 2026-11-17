@@ -257,7 +257,7 @@ test("leave edit recalculates both apps, resources and risk while retaining save
   );
   await page
     .locator(".sidebar nav")
-    .getByRole("button", { name: /^Timeline/ })
+    .getByRole("button", { name: "Timeline", exact: true })
     .click();
   await expect(
     page.getByRole("img", { name: /Vacation.*Alex Morgan.*10/ }).first(),

@@ -63,7 +63,7 @@ for (const [width, height] of [
     await expect(page.locator(".delay-explanation[open]")).toContainText(
       "Urgent fix",
     );
-    await page.getByRole("button", { name: /^Timeline(?:\s|$)/ }).click();
+    await page.getByRole("button", { name: "Timeline", exact: true }).click();
     await page
       .getByRole("button", {
         name: "Why delayed? Five-day delivery",

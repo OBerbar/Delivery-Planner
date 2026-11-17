@@ -34,7 +34,7 @@ describe("occurrence metadata compatibility", () => {
       grouped(state.features[0], "repeat"),
     ];
     expect(stateSchema.parse(JSON.parse(JSON.stringify(state)))).toEqual(state);
-    expect(STORAGE_SCHEMA_VERSION).toBe(7);
+    expect(STORAGE_SCHEMA_VERSION).toBe(8);
   });
   it.each(["", " ", "x".repeat(101), 42, null])(
     "rejects invalid group id %j",

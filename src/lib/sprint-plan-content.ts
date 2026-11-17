@@ -37,6 +37,7 @@ export function sprintPlanContent(
     .filter(
       (f) =>
         f.appId === sprint.appId &&
+        f.placement !== "backlog" &&
         (f.sprintId === sprint.id || overlaps(sprint, forecast.features[f.id])),
     )
     .sort((a, b) => a.priority - b.priority);

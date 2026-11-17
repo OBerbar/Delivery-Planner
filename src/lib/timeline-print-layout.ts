@@ -87,7 +87,7 @@ export function timelinePrintPages(
   )
     throw new Error("Choose a valid timeline date range.");
   const features = state.features
-    .filter((f) => f.appId === appId)
+    .filter((f) => f.appId === appId && f.placement !== "backlog")
     .sort((a, b) => a.priority - b.priority);
   const windows: { start: string; end: string }[] = [];
   for (let cursor = start; cursor <= end;) {

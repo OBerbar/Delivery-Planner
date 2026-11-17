@@ -92,6 +92,7 @@ const tolerance = 1e-7;
 /** Priority numbers are rewritten on insertion, even for unaffected features. */
 function featureEditReasons(before: Feature, after: Feature): string[] {
   const fields: [string, (keyof Feature)[]][] = [
+    ["Placement changed", ["placement"]],
     ["Title changed", ["title"]],
     ["Description changed", ["description"]],
     ["Completion conditions changed", ["completion"]],
@@ -117,8 +118,10 @@ function featureEditReasons(before: Feature, after: Feature): string[] {
   ];
   return fields
     .filter(([, keys]) =>
-      keys.some(
-        (key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]),
+      keys.some((key) =>
+        key === "placement"
+          ? (before.placement ?? "timeline") !== (after.placement ?? "timeline")
+          : JSON.stringify(before[key]) !== JSON.stringify(after[key]),
       ),
     )
     .map(([label]) => label);

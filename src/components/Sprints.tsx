@@ -95,7 +95,7 @@ export function Sprints({
           <aside className="sprint-list">
             {sprints.map((s) => {
               const features = state.features.filter(
-                  (f) => f.sprintId === s.id,
+                  (f) => f.sprintId === s.id && f.placement !== "backlog",
                 ),
                 risk = features.some(
                   (f) =>
@@ -151,7 +151,7 @@ export function Sprints({
             onDelete={async () => {
               if (
                 confirm(
-                  `Delete Sprint ${sprint.number}? Its features will return to the backlog. You can undo this change.`,
+                  `Delete Sprint ${sprint.number}? Its features will keep their placement without a sprint assignment. You can undo this change.`,
                 )
               ) {
                 try {
@@ -211,7 +211,9 @@ function SprintWorkbench({
     [error, setError] = useState("");
   const app = state.apps.find((a) => a.id === sprint.appId)!;
   const team = resources(state, sprint, forecast),
-    features = state.features.filter((f) => f.sprintId === sprint.id);
+    features = state.features.filter(
+      (f) => f.sprintId === sprint.id && f.placement !== "backlog",
+    );
   const { goals } = sprintPlanContent(state, sprint, forecast);
   const [tab, setTab] = useState("scope");
   const settledText = useRef({

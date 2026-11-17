@@ -37,6 +37,7 @@ export default defineConfig({
         "**/app-layout.spec.ts",
         "**/date-status.spec.ts",
         "**/feature-blocked.spec.ts",
+        "**/feature-backlog.spec.ts",
         "**/ignore-leave.spec.ts",
         "**/feature-overview.spec.ts",
         "**/occurrences.spec.ts",

@@ -95,6 +95,7 @@ export function FeatureEditor({
   forecast,
   appId,
   feature,
+  initialPlacement = "timeline",
   onSave,
   onClose,
   busy,
@@ -103,11 +104,15 @@ export function FeatureEditor({
   forecast: Schedule;
   appId: string;
   feature?: Feature;
+  initialPlacement?: "timeline" | "backlog";
   onSave: (features: Feature[], deletedIds?: string[]) => Promise<void>;
   onClose: () => void;
   busy: boolean;
 }) {
   const experiment = usePlanningMode();
+  const [placement, setPlacement] = useState(
+    feature ? (feature.placement ?? "timeline") : initialPlacement,
+  );
   const members = state.members.filter((m) => m.appId === appId);
   const freshTask = (): Task => ({
     id: uid(),
@@ -224,6 +229,10 @@ export function FeatureEditor({
         const normalized = {
           ...candidate,
           title: draft.title,
+          placement:
+            placement === "timeline" && candidate.placement === undefined
+              ? undefined
+              : placement,
           ...(!state.features.some((f) => f.id === candidate.id) &&
           sources[candidate.id]
             ? {
@@ -336,6 +345,20 @@ export function FeatureEditor({
           placeholder="What are we delivering?"
           required
         />
+        <Pick
+          label="Placement"
+          value={placement}
+          options={[
+            { id: "timeline", label: "Timeline" },
+            { id: "backlog", label: "Backlog" },
+          ]}
+          onChange={(value) => setPlacement(value as "timeline" | "backlog")}
+          hint={
+            placement === "backlog"
+              ? "Keeps all feature data without reserving capacity. All occurrences stay in backlog."
+              : "Schedules this feature and all its occurrences using their saved estimates and calendars."
+          }
+        />
         {feature && (
           <section className="occurrence-editor" aria-label="Occurrences">
             <div className="section-heading">
@@ -381,7 +404,7 @@ export function FeatureEditor({
             label="Assigned sprint"
             value={draft.sprintId ?? "none"}
             options={[
-              { id: "none", label: "Backlog / not assigned" },
+              { id: "none", label: "No sprint assigned" },
               ...state.sprints
                 .filter((s) => s.appId === appId)
                 .map((s) => ({
@@ -488,7 +511,7 @@ export function FeatureEditor({
             </p>
             <fieldset
               className="commitment-toggle"
-              disabled={busy || experiment}
+              disabled={busy || experiment || placement === "backlog"}
             >
               <Check
                 label="Accept delivery date"
@@ -744,6 +767,7 @@ export function Features({
   onOverview,
   onAdd,
   onMove,
+  onPlacement,
   onRefreshCommitments,
   busy,
 }: {
@@ -752,17 +776,27 @@ export function Features({
   forecast: Schedule;
   onEdit: (f: Feature) => void;
   onOverview: (f: Feature) => void;
-  onAdd: () => void;
+  onAdd: (placement: "timeline" | "backlog") => void;
   onMove: (id: string, direction: number) => void;
+  onPlacement: (
+    feature: Feature,
+    placement: "timeline" | "backlog",
+  ) => Promise<void>;
   onRefreshCommitments: (ids: string[]) => Promise<void>;
   busy: boolean;
 }) {
   const experiment = usePlanningMode();
+  const [placement, setPlacement] = useState<"timeline" | "backlog">(
+    "timeline",
+  );
   const [search, setSearch] = useState(""),
     [error, setError] = useState("");
-  const records = state.features
+  const allRecords = state.features
     .filter((f) => f.appId === appId)
     .sort((a, b) => a.priority - b.priority);
+  const records = allRecords.filter(
+    (f) => (f.placement ?? "timeline") === placement,
+  );
   const { preferences } = useViewPreferences();
   const filtered = hasFeatureFilters(preferences);
   const groups = groupOccurrences(records);
@@ -788,7 +822,33 @@ export function Features({
   );
   const features = matchingGroups.map((group) => group[0]);
   const commitments = records.filter(
-    (f) => f.committed && !forecast.features[f.id]?.done,
+    (f) =>
+      f.placement !== "backlog" &&
+      f.committed &&
+      !forecast.features[f.id]?.done,
+  );
+  const add = () => onAdd(placement);
+  const movePlacement = async (feature: Feature) => {
+    setError("");
+    try {
+      await onPlacement(
+        feature,
+        placement === "backlog" ? "timeline" : "backlog",
+      );
+    } catch (error) {
+      setError(formError(error));
+    }
+  };
+  const placementAction = (feature: Feature) => (
+    <Button
+      variant="outline"
+      size="sm"
+      isDisabled={busy}
+      aria-label={`Move ${feature.title} to ${placement === "backlog" ? "timeline" : "backlog"}`}
+      onPress={() => movePlacement(feature)}
+    >
+      {placement === "backlog" ? "Move to timeline" : "Move to backlog"}
+    </Button>
   );
   const refresh = async (ids: string[]) => {
     if (busy) return;
@@ -801,6 +861,35 @@ export function Features({
   };
   return (
     <>
+      <div className="feature-placement-toolbar">
+        <div className="segmented" role="group" aria-label="Feature placement">
+          {(["timeline", "backlog"] as const).map((value) => (
+            <button
+              key={value}
+              className={placement === value ? "selected" : ""}
+              aria-pressed={placement === value}
+              aria-label={
+                value === "backlog" ? "Backlog features" : "Timeline features"
+              }
+              onClick={() => setPlacement(value)}
+            >
+              {value === "backlog" ? "Backlog" : "Timeline"} ·{" "}
+              {
+                groupOccurrences(
+                  allRecords.filter(
+                    (f) => (f.placement ?? "timeline") === value,
+                  ),
+                ).length
+              }
+            </button>
+          ))}
+        </div>
+        {placement === "backlog" && (
+          <p className="helper">
+            Saved for later. Backlog features do not reserve capacity.
+          </p>
+        )}
+      </div>
       <div className="panel-toolbar">
         <div className="search-field">
           <Search size={17} />
@@ -821,7 +910,7 @@ export function Features({
             <RefreshCw size={15} aria-hidden="true" />
             Refresh app commitment dates
           </Button>
-          <Button onPress={onAdd} isDisabled={busy}>
+          <Button onPress={add} isDisabled={busy}>
             <Plus size={16} />
             Add feature
           </Button>
@@ -851,17 +940,21 @@ export function Features({
           title={
             search || filtered
               ? "No matching features"
-              : "Your next delivery starts here"
+              : placement === "backlog"
+                ? "Your backlog is empty"
+                : "Your next delivery starts here"
           }
           detail={
             search || filtered
               ? "Try another search or reset the filters."
-              : "Add a feature, estimate its sprints, and select its main assignees."
+              : placement === "backlog"
+                ? "Add a feature for later, or move one here from the timeline."
+                : "Add a feature, estimate its sprints, and select its main assignees."
           }
           action={
             !search &&
             !filtered && (
-              <Button variant="secondary" onPress={onAdd}>
+              <Button variant="secondary" onPress={add}>
                 Add your first feature
               </Button>
             )
@@ -950,17 +1043,17 @@ export function Features({
                               )}
                             </span>
                             <span
-                              className={`status-pill ${featureStatus(occurrence, forecast.features[occurrence.id] ?? {}, forecast.asOf ?? today())}`}
+                              className={`status-pill ${placement === "backlog" ? "backlog" : featureStatus(occurrence, forecast.features[occurrence.id] ?? {}, forecast.asOf ?? today())}`}
                             >
-                              {
-                                statusLabels[
-                                  featureStatus(
-                                    occurrence,
-                                    forecast.features[occurrence.id] ?? {},
-                                    forecast.asOf ?? today(),
-                                  )
-                                ]
-                              }
+                              {placement === "backlog"
+                                ? "Backlog"
+                                : statusLabels[
+                                    featureStatus(
+                                      occurrence,
+                                      forecast.features[occurrence.id] ?? {},
+                                      forecast.asOf ?? today(),
+                                    )
+                                  ]}
                             </span>
                           </button>
                           <CommitmentDates
@@ -994,14 +1087,17 @@ export function Features({
                       ))}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    isIconOnly
-                    aria-label={`Edit ${f.title}`}
-                    onPress={() => onEdit(f)}
-                  >
-                    <Pencil size={16} />
-                  </Button>
+                  <div className="feature-item-actions">
+                    {placementAction(f)}
+                    <Button
+                      variant="ghost"
+                      isIconOnly
+                      aria-label={`Edit ${f.title}`}
+                      onPress={() => onEdit(f)}
+                    >
+                      <Pencil size={16} />
+                    </Button>
+                  </div>
                 </article>
               );
             return (
@@ -1051,8 +1147,12 @@ export function Features({
                         {f.title}
                       </button>
                     </h3>
-                    <span className={`status-pill ${status}`}>
-                      {statusLabels[status]}
+                    <span
+                      className={`status-pill ${placement === "backlog" ? "backlog" : status}`}
+                    >
+                      {placement === "backlog"
+                        ? "Backlog"
+                        : statusLabels[status]}
                     </span>
                   </div>
                   <p>{f.description || "No description yet."}</p>
@@ -1067,7 +1167,9 @@ export function Features({
                         : featureEstimateLabel(f)}
                     </span>
                     <span>
-                      {sprint ? `Sprint ${sprint.number}` : "Backlog"}
+                      {sprint
+                        ? `Sprint ${sprint.number}`
+                        : "No sprint assigned"}
                     </span>
                     <span>{f.committed ? "Committed" : "Non-committed"}</span>
                     {f.doesntAffectOtherWork && (
@@ -1093,8 +1195,14 @@ export function Features({
                   />
                 </div>
                 <div className="feature-dates">
-                  <small>FORECAST DELIVERY</small>
-                  <strong>{displayDate(r.end)}</strong>
+                  <small>
+                    {placement === "backlog"
+                      ? "PLACEMENT"
+                      : "FORECAST DELIVERY"}
+                  </small>
+                  <strong>
+                    {placement === "backlog" ? "Backlog" : displayDate(r.end)}
+                  </strong>
                   <CommitmentDates feature={f} result={r} />
                   {f.committed && !r.done && (
                     <Button
@@ -1121,14 +1229,17 @@ export function Features({
                     ))}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  isIconOnly
-                  aria-label={`Edit ${f.title}`}
-                  onPress={() => onEdit(f)}
-                >
-                  <Pencil size={16} />
-                </Button>
+                <div className="feature-item-actions">
+                  {placementAction(f)}
+                  <Button
+                    variant="ghost"
+                    isIconOnly
+                    aria-label={`Edit ${f.title}`}
+                    onPress={() => onEdit(f)}
+                  >
+                    <Pencil size={16} />
+                  </Button>
+                </div>
                 {/^https?:\/\//.test(f.link) && (
                   <a
                     href={f.link}

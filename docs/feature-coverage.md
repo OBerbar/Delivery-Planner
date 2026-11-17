@@ -134,3 +134,9 @@ The Feature overview days-each summary preserves equal saved estimate inputs acr
 ## Shared multi-select planning filters (2026-11-10)
 
 [Timeline filters](user-manual.md#timeline) and [Features](user-manual.md#features) share Person, Sprint, Status and Risk selections per app. Empty/All clears a category; selections OR within categories and AND across categories. Feature search narrows matching occurrences; priority controls still follow full group order. [Filter rules](../tests/feature-filters.test.ts), [preference migration](../tests/view-preferences.test.ts), [multi-select browser workflows](../tests/planning-filters.spec.ts), [occurrence filtering](../tests/occurrences.spec.ts) and [timeline preferences](../tests/timeline-refinements.spec.ts) cover migration, selection/deselection, keyboard, search/reset, screen/app/reload persistence, accessible responsive layouts and no saved workspace writes.
+
+## Feature backlog (2026-11-17)
+
+| Behavior                                                                                                                               | Manual                                    | Regression evidence                                              |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------- |
+| Create or move whole features between Timeline and Backlog; retain scope, occurrences, effort and commitments while releasing bookings | [Backlog](user-manual.md#feature-backlog) | `tests/feature-backlog.test.ts`, `tests/feature-backlog.spec.ts` |
