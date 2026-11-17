@@ -59,11 +59,20 @@ export function FeatureOverview({
           {featureOccurrences(state.features, feature).length > 1 && (
             <p>{occurrenceLabel(state, feature)}</p>
           )}
-          <span className={`status-pill ${status}`}>
-            {statusLabels[status]}
+          <span
+            className={`status-pill ${feature.placement === "backlog" ? "backlog" : status}`}
+          >
+            {feature.placement === "backlog" ? "Backlog" : statusLabels[status]}
           </span>
           {feature.description && <p>{feature.description}</p>}
         </header>
+        {feature.placement === "backlog" && (
+          <p className="helper">
+            This feature is in backlog and does not reserve capacity. Move it to
+            the timeline when you are ready to schedule it. Its saved details
+            and estimates are retained.
+          </p>
+        )}
         <dl className="overview-dates">
           <div>
             <dt>Scheduled start</dt>
@@ -191,70 +200,79 @@ export function FeatureOverview({
             ))}
           </details>
         </section>
-        <section aria-label="Delivery drivers">
-          <h3>Who determines delivery?</h3>
-          <p>
-            {!data.end
-              ? "Delivery is not fully scheduled. Resolve the planning warnings to identify its finish."
-              : determiners.length
-                ? `${determiners.map((p) => p.name).join(" and ")} ${determiners.length === 1 ? "determines" : "determine"} delivery${determiners.length > 1 ? " together" : ""}: ${displayDate(data.end)}.`
-                : "Delivery follows the feature’s scheduled work."}
-          </p>
-        </section>
-        <figure
-          className="overview-mini-timeline"
-          aria-label="Person delivery timeline"
-        >
-          <figcaption>Person delivery timeline</figcaption>
-          {data.start && data.end && data.calendarDays ? (
-            <>
-              <div className="overview-mini-range">
-                <span>{displayDate(data.start)}</span>
-                <span>{displayDate(data.end)}</span>
-              </div>
-              {data.people.map((p) => (
-                <div className="overview-mini-row" key={p.personId}>
-                  <span>{p.name}</span>
-                  <div
-                    className="overview-mini-track"
-                    role="img"
-                    aria-label={`${p.name}: ${displayDate(p.start)} – ${displayDate(p.end)}`}
-                  >
-                    {p.start && p.end ? (
-                      <span
-                        className={`overview-mini-bar ${p.determinesDelivery ? "determines" : ""}`}
-                        style={{
-                          left: `${(offset(p.start) / data.calendarDays!) * 100}%`,
-                          width: `${((offset(p.end) - offset(p.start) + 1) / data.calendarDays!) * 100}%`,
-                        }}
-                      />
-                    ) : (
-                      <span className="helper">Not scheduled</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <p className="helper">
-                Bars show each person’s work window, including gaps and
-                nonworking days. Highlighted bars finish on the delivery date.
+        {feature.placement !== "backlog" && (
+          <>
+            <section aria-label="Delivery drivers">
+              <h3>Who determines delivery?</h3>
+              <p>
+                {!data.end
+                  ? "Delivery is not fully scheduled. Resolve the planning warnings to identify its finish."
+                  : determiners.length
+                    ? `${determiners.map((p) => p.name).join(" and ")} ${determiners.length === 1 ? "determines" : "determine"} delivery${determiners.length > 1 ? " together" : ""}: ${displayDate(data.end)}.`
+                    : "Delivery follows the feature’s scheduled work."}
               </p>
-            </>
-          ) : (
-            <p className="helper">
-              A complete timeline appears when all work has scheduled dates.
-            </p>
-          )}
-        </figure>
-        <ForecastConstraints
-          feature={feature}
-          data={data}
-          completed={result?.done}
-        />
+            </section>
+            <figure
+              className="overview-mini-timeline"
+              aria-label="Person delivery timeline"
+            >
+              <figcaption>Person delivery timeline</figcaption>
+              {data.start && data.end && data.calendarDays ? (
+                <>
+                  <div className="overview-mini-range">
+                    <span>{displayDate(data.start)}</span>
+                    <span>{displayDate(data.end)}</span>
+                  </div>
+                  {data.people.map((p) => (
+                    <div className="overview-mini-row" key={p.personId}>
+                      <span>{p.name}</span>
+                      <div
+                        className="overview-mini-track"
+                        role="img"
+                        aria-label={`${p.name}: ${displayDate(p.start)} – ${displayDate(p.end)}`}
+                      >
+                        {p.start && p.end ? (
+                          <span
+                            className={`overview-mini-bar ${p.determinesDelivery ? "determines" : ""}`}
+                            style={{
+                              left: `${(offset(p.start) / data.calendarDays!) * 100}%`,
+                              width: `${((offset(p.end) - offset(p.start) + 1) / data.calendarDays!) * 100}%`,
+                            }}
+                          />
+                        ) : (
+                          <span className="helper">Not scheduled</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <p className="helper">
+                    Bars show each person’s work window, including gaps and
+                    nonworking days. Highlighted bars finish on the delivery
+                    date.
+                  </p>
+                </>
+              ) : (
+                <p className="helper">
+                  A complete timeline appears when all work has scheduled dates.
+                </p>
+              )}
+            </figure>
+            <ForecastConstraints
+              feature={feature}
+              data={data}
+              completed={result?.done}
+            />
+          </>
+        )}
         <div className="dialog-actions overview-actions">
           <Button variant="ghost" onPress={onClose}>
             Close overview
           </Button>
-          <Button variant="secondary" onPress={onTimeline}>
+          <Button
+            variant="secondary"
+            isDisabled={feature.placement === "backlog"}
+            onPress={onTimeline}
+          >
             View on timeline
           </Button>
           <Button isDisabled={busy} onPress={onEdit}>

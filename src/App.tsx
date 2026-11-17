@@ -98,6 +98,9 @@ export default function App({
     [page, setPage] = useState("timeline"),
     [wizard, setWizard] = useState(false),
     [editing, setEditing] = useState<Feature | "new" | null>(null),
+    [newPlacement, setNewPlacement] = useState<"timeline" | "backlog">(
+      "timeline",
+    ),
     [overviewId, setOverviewId] = useState<string | null>(null),
     [timelineFocus, setTimelineFocus] = useState<string | undefined>(),
     [notice, setNotice] = useState(""),
@@ -247,8 +250,12 @@ export default function App({
     });
   };
   const move = (id: string, direction: number) => {
+    const placement =
+      features.find((feature) => feature.id === id)?.placement ?? "timeline";
     const groups = groupOccurrences(
-      features.slice().sort((a, b) => a.priority - b.priority),
+      features
+        .filter((feature) => (feature.placement ?? "timeline") === placement)
+        .sort((a, b) => a.priority - b.priority),
     );
     const index = groups.findIndex((group) => group.some((f) => f.id === id));
     if (groups[index + direction]) reorder(id, groups[index + direction][0].id);
@@ -466,7 +473,10 @@ export default function App({
                     stakeholderMode={stakeholderMode}
                     appId={app.id}
                     onEdit={setEditing}
-                    onAdd={() => setEditing("new")}
+                    onAdd={() => {
+                      setNewPlacement("timeline");
+                      setEditing("new");
+                    }}
                     onReorder={reorder}
                     focusFeatureId={timelineFocus}
                   />
@@ -489,6 +499,7 @@ export default function App({
               {page === "features" && (
                 <>
                   <Features
+                    key={app.id}
                     {...{ state, forecast }}
                     appId={app.id}
                     onEdit={setEditing}
@@ -499,8 +510,16 @@ export default function App({
                           : null;
                       setOverviewId(feature.id);
                     }}
-                    onAdd={() => setEditing("new")}
+                    onAdd={(placement) => {
+                      setNewPlacement(placement);
+                      setEditing("new");
+                    }}
                     onMove={move}
+                    onPlacement={(feature, placement) =>
+                      save(
+                        applyFeatureChanges(state, [{ ...feature, placement }]),
+                      )
+                    }
                     onRefreshCommitments={refreshFeatureCommitments}
                     busy={saving}
                   />
@@ -619,6 +638,7 @@ export default function App({
               forecast={forecast}
               appId={app.id}
               feature={editing === "new" ? undefined : editing}
+              initialPlacement={newPlacement}
               busy={saving}
               onClose={closeEditor}
               onSave={async (changed, deletedIds = []) => {

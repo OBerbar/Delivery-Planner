@@ -611,6 +611,23 @@
         "tests/timeline-occurrences.test.ts",
         "tests/occurrences.spec.ts"
       ]
+    },
+    {
+      "id": "feature-backlog",
+      "title": "Feature backlog with preserved data and released timeline capacity",
+      "manualAnchor": "feature-backlog",
+      "fields": [
+        "Placement",
+        "Timeline features",
+        "Backlog features",
+        "Move to backlog",
+        "Move to timeline",
+        "No sprint assigned"
+      ],
+      "tests": [
+        "tests/feature-backlog.test.ts",
+        "tests/feature-backlog.spec.ts"
+      ]
     }
   ]
 }

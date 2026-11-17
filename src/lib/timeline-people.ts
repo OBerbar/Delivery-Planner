@@ -42,7 +42,7 @@ export function peopleTimelineRows(
     differenceInCalendarDays(parseISO(date), parseISO(start));
   const width = (offset(end) + 1) * cell;
   const features = state.features
-    .filter((f) => f.appId === appId)
+    .filter((f) => f.appId === appId && f.placement !== "backlog")
     .sort((a, b) => a.priority - b.priority);
   const byPerson = new Map<string, TimelineWorkBar[]>();
   for (const feature of features) {

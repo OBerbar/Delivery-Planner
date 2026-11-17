@@ -32,7 +32,7 @@ export function applyFeatureChange(
       f.id === id
         ? replacement
         : siblings.has(f.id)
-          ? { ...f, title: feature.title }
+          ? { ...f, title: feature.title, placement: feature.placement }
           : f,
     );
   } else if (
@@ -52,6 +52,7 @@ export function applyFeatureChange(
             ...f,
             occurrenceGroupId: occurrenceGroupId(feature),
             title: feature.title,
+            placement: feature.placement,
           }
         : f,
     );

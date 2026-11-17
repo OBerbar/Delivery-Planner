@@ -50,7 +50,11 @@ export function reconcileCommitments(
       .filter(
         (f) =>
           f.committed &&
-          !before.features.find((old) => old.id === f.id)?.committed,
+          f.placement !== "backlog" &&
+          (!before.features.find((old) => old.id === f.id)?.committed ||
+            (before.features.find((old) => old.id === f.id)?.placement ===
+              "backlog" &&
+              !f.commitment)),
       )
       .map((f) => f.id),
   );

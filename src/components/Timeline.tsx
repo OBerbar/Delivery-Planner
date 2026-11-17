@@ -118,7 +118,7 @@ function TimelineView({
   const [expanded, setExpanded] = useState<string[]>([]),
     [dragging, setDragging] = useState("");
   const allFeatures = state.features
-    .filter((f) => f.appId === appId)
+    .filter((f) => f.appId === appId && f.placement !== "backlog")
     .sort((a, b) => a.priority - b.priority);
   const features = allFeatures.filter((feature) =>
     matchesFeatureFilters(feature, preferences, forecast, currentDate),

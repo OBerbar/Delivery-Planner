@@ -144,7 +144,11 @@ export function schedule(
   };
   const parallel = new Map<string, typeof shared>();
   const rows = state.features
-    .filter((f) => !state.apps.find((a) => a.id === f.appId)?.archived)
+    .filter(
+      (f) =>
+        f.placement !== "backlog" &&
+        !state.apps.find((a) => a.id === f.appId)?.archived,
+    )
     .sort(
       (a, b) =>
         a.priority - b.priority ||
@@ -155,7 +159,9 @@ export function schedule(
   let pending = rows.slice();
   for (const f of state.features)
     for (const t of featureWork(state, f)) {
-      if (t.status === "done")
+      if (f.placement === "backlog")
+        result.tasks[t.id] = { days: [], reason: "Feature is in backlog" };
+      else if (t.status === "done")
         result.tasks[t.id] = {
           start: t.actualStart,
           end: t.actualEnd,
@@ -184,7 +190,10 @@ export function schedule(
       if (bad) {
         result.tasks[t.id] = {
           days: [],
-          reason: "Waiting for an unscheduled or blocked dependency",
+          reason:
+            result.tasks[bad].reason === "Feature is in backlog"
+              ? "Waiting for a dependency in backlog"
+              : "Waiting for an unscheduled or blocked dependency",
         };
         continue;
       }
@@ -369,6 +378,10 @@ export function schedule(
     }
   }
   for (const f of state.features) {
+    if (f.placement === "backlog") {
+      result.features[f.id] = { hours: 0, done: false };
+      continue;
+    }
     const work = featureWork(state, f);
     const forecasts = work.map((t) => result.tasks[t.id]);
     const starts = forecasts.flatMap((v) => (v?.start ? [v.start] : [])).sort();
@@ -422,7 +435,9 @@ export function resources(
   sprint: Sprint,
   forecast: Schedule,
 ) {
-  const features = state.features.filter((f) => f.sprintId === sprint.id);
+  const features = state.features.filter(
+    (f) => f.sprintId === sprint.id && f.placement !== "backlog",
+  );
   return [
     ...new Set(
       features.flatMap((f) => featureWork(state, f).map((t) => t.personId)),

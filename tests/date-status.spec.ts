@@ -293,7 +293,7 @@ for (const warning of ["target", "commitment"] as const) {
       await expect(card.locator(".status-pill")).toHaveText(status);
       if (date === "2030-01-07")
         await expect(card.locator(".inline-warning")).toBeVisible();
-      await page.getByRole("button", { name: /^Timeline(?:\s|$)/ }).click();
+      await page.getByRole("button", { name: "Timeline", exact: true }).click();
     }
   });
 }

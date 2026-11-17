@@ -1444,7 +1444,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #a38fbc;
+  color: #665176;
   font-size: 11px;
 }
 .impact-panel h3 {
@@ -1453,7 +1453,7 @@ button:disabled {
 }
 .impact-panel > div > span {
   margin-left: auto;
-  color: #aaa2b9;
+  color: #665b73;
   font-size: 10px;
 }
 .impact-panel p {
@@ -1461,11 +1461,11 @@ button:disabled {
   justify-content: space-between;
   font-size: 11px;
   margin-top: 14px;
-  color: #a09aa9;
+  color: #665b73;
 }
 .impact-panel p strong {
   font-weight: 500;
-  color: #837b93;
+  color: #665176;
 }
 .impact-panel p span {
   display: flex;
@@ -1557,7 +1557,7 @@ button:disabled {
   color: #a06a3f;
 }
 .impact-earlier {
-  color: #34886e;
+  color: #286650;
 }
 .search-field {
   display: flex;

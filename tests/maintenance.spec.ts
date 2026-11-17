@@ -32,7 +32,12 @@ async function seed(request: APIRequestContext, state: PlannerState) {
 }
 async function nav(page: Page, name: string) {
   await page
-    .getByRole("button", { name: new RegExp(`^${name.trim()}(?:\\s|$)`) })
+    .getByRole("button", {
+      name:
+        name.trim() === "Timeline"
+          ? /^Timeline$/
+          : new RegExp(`^${name.trim()}(?:\\s|$)`),
+    })
     .click();
 }
 async function select(page: Page, label: string, option: string) {
